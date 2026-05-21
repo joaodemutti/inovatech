@@ -852,15 +852,15 @@ O arquivo `Clínica.xlsx` é o protótipo funcional do sistema, com dados reais 
 
 ## 16. Cronograma
 
-| Atividade | Jan | Fev | Mar | Abr | Mai | Jun | Jul | Ago | Set | Out | Nov | Dez |
+| Tarefa | Jan | Fev | Mar | Abr | Mai | Jun | Jul | Ago | Set | Out | Nov | Dez |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Levantamento de requisitos | ✓ | ✓ | | | | | | | | | | |
-| Análise do sistema | | | ✓ | ✓ | | | | | | | | |
-| Projeto da arquitetura | | | | | ✓ | ✓ | | | | | | |
-| Implementação | | | | | | | ✓ | ✓ | | | | |
-| Testes | | | | | | | | | ✓ | | | |
-| Documentação | | | | | | | | | | ✓ | | |
-| Entrega final | | | | | | | | | | | | ✓ |
+| Levantamento de requisitos | | X | X | | | | | | | | | |
+| Análise do sistema | | | X | X | | | | | | | | |
+| Projeto da arquitetura | | | | X | X | | | | | | | |
+| Implementação | | | | | X | X | | | | | | |
+| Testes | | | | | | X | | | | | | |
+| Documentação | | | | | | X | | | | | | |
+| Entrega final | | | | | | X | | | | | | |
 
 ---
 
