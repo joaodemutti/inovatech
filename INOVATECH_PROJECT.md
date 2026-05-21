@@ -382,6 +382,8 @@ id, data_hora, usuario_id (FK), acao, modulo, ip, resultado, detalhes
 | RF08 | Backup | Realizar backup automático diário dos dados com registro no log de auditoria |
 | RF09 | Agenda → Financeiro | Ao registrar consulta como Realizada, criar lançamento financeiro automaticamente |
 | RF10 | Portal Paciente | Disponibilizar download de laudos em PDF somente após liberação explícita do médico |
+| RF11 | Excel — Exportação | Exportar dados de cada entidade (Consultas, Prontuários, Pacientes, Médicos, Lançamentos Financeiros, Registros de Ponto, Usuários, Log de Auditoria) em arquivo `.xlsx` |
+| RF12 | Excel — Importação | Importar dados via arquivo `.xlsx` para cada entidade, com validação de campos obrigatórios, tipos e unicidade (CPF, CRM) antes de persistir no banco |
 
 ### 7.2 Requisitos Não Funcionais
 
@@ -446,8 +448,8 @@ id, data_hora, usuario_id (FK), acao, modulo, ip, resultado, detalhes
 
 O Excel protótipo (`Clínica.xlsx`) funciona como **fonte da verdade** do projeto — é a referência de todas as tabelas, campos, tipos de dado e regras de negócio. O backend utiliza:
 
-- **pandas** → para importar dados do Excel e popular o banco durante desenvolvimento/testes
-- **openpyxl** → para gerar relatórios financeiros e exportações em `.xlsx` a partir dos dados do banco
+- **pandas** → para importar dados do Excel e popular o banco durante desenvolvimento/testes, e para importação de dados via Excel em todas as entidades (Agenda, Prontuário, Cadastro, Financeiro, Ponto, Administrativo)
+- **openpyxl** → para gerar exportações em `.xlsx` a partir dos dados do banco para todas as entidades (Agenda, Prontuário, Cadastro, Financeiro, Ponto, Administrativo)
 
 ---
 
@@ -534,7 +536,8 @@ inovatech/
 │   │   │   ├── prontuarios.py
 │   │   │   ├── financeiro.py
 │   │   │   ├── ponto.py
-│   │   │   └── admin.py
+│   │   │   ├── admin.py
+│   │   │   └── excel.py               # Rotas de importação e exportação Excel
 │   │   │
 │   │   ├── services/
 │   │   │   ├── auth_service.py
@@ -542,7 +545,8 @@ inovatech/
 │   │   │   ├── financeiro_service.py  # Criação automática de lançamento
 │   │   │   ├── prontuario_service.py  # Controle de liberação de laudo
 │   │   │   ├── ponto_service.py       # Cálculo automático de horas/situação
-│   │   │   └── auditoria_service.py   # Registro de log em todas as ações
+│   │   │   ├── auditoria_service.py   # Registro de log em todas as ações
+│   │   │   └── excel_service.py       # Importação e exportação Excel para todas as entidades
 │   │   │
 │   │   ├── repositories/
 │   │   │   ├── usuario_repository.py
@@ -573,7 +577,8 @@ inovatech/
 │       │   ├── prontuarios.ts
 │       │   ├── financeiro.ts
 │       │   ├── ponto.ts
-│       │   └── admin.ts
+│       │   ├── admin.ts
+│       │   └── excel.ts               # Funções de importação e exportação Excel por entidade
 │       │
 │       ├── hooks/
 │       │   ├── useAuth.ts
@@ -582,7 +587,8 @@ inovatech/
 │       │   ├── useProntuarios.ts
 │       │   ├── useFinanceiro.ts
 │       │   ├── usePonto.ts
-│       │   └── useAdmin.ts
+│       │   ├── useAdmin.ts
+│       │   └── useExcel.ts            # Hooks para importação e exportação Excel
 │       │
 │       ├── pages/
 │       │   ├── Login.tsx
@@ -781,6 +787,29 @@ GET    /portal/laudos            # Laudos liberados do paciente autenticado
 GET    /portal/laudos/{id}/download  # Download do PDF do laudo
 ```
 
+### Excel — Exportação
+```
+GET    /excel/export/pacientes           # Exporta todos os pacientes em .xlsx
+GET    /excel/export/medicos             # Exporta todos os médicos em .xlsx
+GET    /excel/export/consultas           # Exporta todas as consultas em .xlsx
+GET    /excel/export/prontuarios         # Exporta todos os prontuários em .xlsx
+GET    /excel/export/financeiro          # Exporta todos os lançamentos financeiros em .xlsx
+GET    /excel/export/ponto               # Exporta todos os registros de ponto em .xlsx
+GET    /excel/export/usuarios            # Exporta todos os usuários em .xlsx
+GET    /excel/export/log-auditoria       # Exporta o log de auditoria em .xlsx
+```
+
+### Excel — Importação
+```
+POST   /excel/import/pacientes           # Importa pacientes a partir de arquivo .xlsx
+POST   /excel/import/medicos             # Importa médicos a partir de arquivo .xlsx
+POST   /excel/import/consultas           # Importa consultas a partir de arquivo .xlsx
+POST   /excel/import/prontuarios         # Importa prontuários a partir de arquivo .xlsx
+POST   /excel/import/financeiro          # Importa lançamentos financeiros a partir de arquivo .xlsx
+POST   /excel/import/ponto               # Importa registros de ponto a partir de arquivo .xlsx
+POST   /excel/import/usuarios            # Importa usuários a partir de arquivo .xlsx
+```
+
 ---
 
 ## 13. Páginas do Frontend
@@ -850,6 +879,34 @@ O arquivo `Clínica.xlsx` é o protótipo funcional do sistema, com dados reais 
 
 ---
 
+## 15.1 Importação e Exportação Excel — Especificação por Entidade
+
+Todas as entidades do sistema suportam importação e exportação em formato `.xlsx`. As operações são acessíveis apenas pelo **Gestor** e registradas automaticamente no log de auditoria (RN04).
+
+### Regras Gerais
+
+- **Exportação:** gera um arquivo `.xlsx` com todos os registros da entidade, respeitando os campos e tipos definidos no modelo de dados. O arquivo é gerado pelo backend via `openpyxl` e retornado como download direto (`Content-Disposition: attachment`).
+- **Importação:** recebe um arquivo `.xlsx` via `multipart/form-data`. O backend usa `pandas` para ler e validar cada linha antes de persistir. Erros de validação são retornados em lista sem interromper as linhas válidas.
+- **Validações de importação:** campos obrigatórios, tipos de dado, unicidade de CPF e CRM (RN07), valores de enum permitidos.
+- **Frontend:** botões "Exportar Excel" e "Importar Excel" presentes na barra de ações de cada módulo (visíveis apenas para o perfil Gestor).
+
+### Entidades, Colunas e Perfis
+
+| Entidade | Arquivo Exportado | Colunas Exportadas / Importadas | Perfil |
+|---|---|---|---|
+| Pacientes | `pacientes.xlsx` | id, nome_completo, cpf, data_nascimento, telefone, email, convenio, endereco, status | Gestor |
+| Médicos | `medicos.xlsx` | id, nome_completo, cpf, crm, especialidade, data_formatura, telefone, email, status | Gestor |
+| Consultas | `consultas.xlsx` | id, paciente, cpf_paciente, medico, data, horario, tipo_consulta, convenio, valor, status | Gestor |
+| Prontuários | `prontuarios.xlsx` | id, data, paciente, cpf, medico, cid, diagnostico, prescricao, retorno_em_dias, laudo_liberado | Gestor |
+| Financeiro | `financeiro.xlsx` | id, data, paciente, servico, medico, convenio, valor, status, forma_pagamento, observacao | Gestor |
+| Ponto | `ponto.xlsx` | id, data, funcionario, cargo, entrada, saida, h_trabalhadas, h_esperadas, diferenca, situacao | Gestor |
+| Usuários | `usuarios.xlsx` | id, nome, perfil, login, email, ultimo_acesso, status, modulos_permitidos, observacao | Gestor |
+| Log de Auditoria | `log_auditoria.xlsx` | id, data_hora, usuario, acao, modulo, ip, resultado, detalhes | Gestor (somente exportação) |
+
+> **Nota:** O Log de Auditoria **não permite importação** — é um registro somente leitura gerado pelo sistema.
+
+---
+
 ## 16. Cronograma
 
 | Tarefa | Jan | Fev | Mar | Abr | Mai | Jun | Jul | Ago | Set | Out | Nov | Dez |
@@ -875,7 +932,8 @@ O arquivo `Clínica.xlsx` é o protótipo funcional do sistema, com dados reais 
 - Integração com WhatsApp Business API para lembretes de consulta
 - Portal do paciente para download de laudos liberados
 - Backup automático diário com registro no log
-- Exportação de relatórios financeiros em Excel
+- Exportação de dados em Excel para todas as entidades (Agenda, Prontuário, Cadastro, Financeiro, Ponto, Administrativo)
+- Importação de dados via Excel para todas as entidades (Agenda, Prontuário, Cadastro, Financeiro, Ponto, Administrativo)
 - Import inicial de dados a partir do Excel protótipo
 - Funcionamento offline das funcionalidades essenciais (cache local)
 
