@@ -201,7 +201,10 @@ def seed(db: Session):
 if __name__ == "__main__":
     db = SessionLocal()
     try:
-        seed(db)
+        if db.query(Usuario).first():
+            print("ℹ Banco já populado — seed ignorado.")
+        else:
+            seed(db)
     except Exception as e:
         db.rollback()
         print(f"✗ Erro durante seed: {e}")
