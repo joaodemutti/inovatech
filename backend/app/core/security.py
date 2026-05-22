@@ -1,19 +1,17 @@
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 import jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def criar_hash_senha(senha: str) -> str:
-    return pwd_context.hash(senha)
+    return bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
 
 
 def verificar_senha(senha: str, hash_senha: str) -> bool:
-    return pwd_context.verify(senha, hash_senha)
+    return bcrypt.checkpw(senha.encode(), hash_senha.encode())
 
 
 def criar_token(data: dict) -> str:

@@ -6,7 +6,7 @@ psycopg[binary]
 pydantic[email]
 pydantic-settings
 pyjwt
-passlib[bcrypt]
+bcrypt
 python-multipart
 openpyxl
 pandas
