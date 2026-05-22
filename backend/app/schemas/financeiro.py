@@ -46,3 +46,14 @@ class IndicadoresFinanceiros(BaseModel):
     a_receber: Decimal
     atrasado: Decimal
     total_lancado: Decimal
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "receita_paga": 1500.00,
+                "a_receber": 600.00,
+                "atrasado": 400.00,
+                "total_lancado": 2500.00,
+            }
+        }
+    }
