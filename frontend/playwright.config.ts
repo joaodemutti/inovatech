@@ -1,4 +1,20 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Carrega tests/.env.test se existir
+const envFile = path.join(__dirname, 'tests/.env.test');
+if (fs.existsSync(envFile)) {
+  const lines = fs.readFileSync(envFile, 'utf-8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const [key, ...rest] = trimmed.split('=');
+    if (key && rest.length > 0) {
+      process.env[key.trim()] = rest.join('=').trim();
+    }
+  }
+}
 
 export default defineConfig({
   testDir: './tests',

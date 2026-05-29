@@ -1,27 +1,18 @@
 #!/bin/bash
-# Executa todos os testes e gera relatórios HTML + cobertura
+# Executa testes E2E de API contra um backend real.
 
 set -e
 
-echo "==> Instalando dependências de teste..."
+echo "==> Instalando dependencias de teste..."
 pip install -r requirements-test.txt -q
 
-echo "==> Criando banco de teste (se não existir)..."
-psql -U inovatech -c "CREATE DATABASE inovatech_test OWNER inovatech;" 2>/dev/null || true
+export E2E_API_URL="${E2E_API_URL:-http://localhost:8000}"
 
-echo "==> Rodando testes..."
-pytest \
-  --cov=app \
-  --cov-report=html:reports/coverage \
-  --cov-report=term-missing \
-  --html=reports/report.html \
-  --self-contained-html \
-  -v \
-  "$@"
+echo "==> Rodando testes E2E de API em ${E2E_API_URL}..."
+pytest tests_e2e "$@"
 
 echo ""
 echo "=============================="
-echo " Relatórios gerados:"
-echo "  • Testes:    reports/report.html"
-echo "  • Cobertura: reports/coverage/index.html"
+echo " Relatorio gerado:"
+echo "  - Testes: reports/report.html"
 echo "=============================="

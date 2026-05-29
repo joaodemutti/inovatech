@@ -13,7 +13,8 @@
     "test:auth": "playwright test tests/specs/auth.spec.ts",
     "test:dashboard": "playwright test tests/specs/dashboard.spec.ts",
     "test:pacientes": "playwright test tests/specs/pacientes.spec.ts",
-    "test:ci": "playwright test --reporter=junit,html"
+    "test:ci": "playwright test --reporter=junit,html",
+    "test:txt": "playwright test --reporter=list,./tests/reporters/text-reporter.ts"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.20",

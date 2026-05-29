@@ -16,7 +16,7 @@ API REST da plataforma de gestão clínica **Clínica Vida Plena**, desenvolvida
 | Autenticação | JWT (PyJWT + bcrypt) |
 | Validação | Pydantic v2 |
 | Excel | Pandas + openpyxl |
-| Testes | pytest + pytest-cov + pytest-html |
+| Testes | pytest + httpx + pytest-html |
 
 ---
 
@@ -92,11 +92,12 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 | Nome | Perfil | Login | Senha |
 |---|---|---|---|
-| Roberto | Gestor | `admin` | `Inovatech@2026` |
-| Ana | Recepcionista | `recepcao` | `Inovatech@2026` |
-| Carlos | Médico | `dr.silva` | `Inovatech@2026` |
-| Renata | Médico | `dra.renata` | `Inovatech@2026` |
-| João | Paciente | `joao.paciente` | `Inovatech@2026` |
+| Roberto | Gestor | `roberto` | `Inovatech@2026` |
+| Ana | Recepcionista | `ana` | `Inovatech@2026` |
+| Carlos | Medico | `carlos` | `Inovatech@2026` |
+| Renata | Medico | `renata` | `Inovatech@2026` |
+| Maria | Paciente | `maria` | `Inovatech@2026` |
+| Joao | Paciente | `joao` | `Inovatech@2026` |
 
 ---
 
@@ -151,7 +152,7 @@ alembic history
 
 ---
 
-## Testes
+## Testes E2E de API
 
 ### Pré-requisito: banco de teste
 
@@ -169,17 +170,17 @@ pip install -r requirements-test.txt
 ### Executar
 
 ```bash
-# Todos os testes + relatório HTML + cobertura
+# Todos os testes E2E de API contra uma API ja rodando
 bash run_tests.sh
 
 # Ou diretamente com pytest
-pytest
+E2E_API_URL=http://localhost:8000 pytest tests_e2e
 
 # Módulo específico
-pytest tests/test_pacientes.py -v
+pytest tests_e2e/test_cadastro.py -v
 
-# Com banco de teste personalizado
-TEST_DATABASE_URL=postgresql+psycopg://user:pass@host/db pytest
+# Com Docker Compose, subindo banco + API + runner E2E
+docker compose -f ../docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from api-e2e
 ```
 
 ### Relatórios gerados
@@ -187,25 +188,16 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@host/db pytest
 | Arquivo | Conteúdo |
 |---|---|
 | `reports/report.html` | Resultado por teste, tempo, stacktrace |
-| `reports/coverage/index.html` | Cobertura de código por módulo |
 
 ### Cobertura dos testes
 
 | Arquivo | O que cobre |
 |---|---|
-| `test_health.py` | Health check |
-| `test_auth.py` | Login, logout, /me, tokens, usuário inativo |
-| `test_usuarios.py` | CRUD, duplicatas login/email, roles |
-| `test_pacientes.py` | CRUD, soft delete, CPF duplicado, roles |
-| `test_medicos.py` | CRUD, CRM/CPF duplicado, roles |
-| `test_consultas.py` | CRUD, filtros, hoje, roles |
-| `test_prontuarios.py` | CRUD, liberar laudo, roles medico |
-| `test_financeiro.py` | Indicadores, CRUD, roles gestor |
-| `test_ponto.py` | Totais, CRUD, filtros de data |
-| `test_dashboard.py` | Indicadores refletem banco |
-| `test_admin.py` | Log de auditoria, backup, roles |
-| `test_excel.py` | Export 8 módulos, bytes PK, roles |
-| `test_portal.py` | Consultas/laudos/download paciente |
+| `test_auth_roles.py` | Login, logout, /me e permissoes por perfil |
+| `test_cadastro.py` | Pacientes e medicos pela API real |
+| `test_agenda_financeiro.py` | Consultas, status e agenda -> financeiro |
+| `test_prontuario_portal.py` | Prontuario, liberacao de laudo e portal |
+| `test_ponto_admin_excel.py` | Ponto, admin, backup e Excel import/export |
 
 ---
 
@@ -224,7 +216,7 @@ backend/
 │   ├── database.py       # Engine, SessionLocal, get_db
 │   └── main.py           # FastAPI app, CORS, routers
 ├── alembic/              # Migrations
-├── tests/                # Suite de testes pytest
+├── tests_e2e/            # Suite E2E de API via pytest + httpx
 ├── reports/              # Relatórios gerados (gitignored)
 ├── seed.py               # Dados iniciais
 ├── requirements.txt

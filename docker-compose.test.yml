@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres-test:
     container_name: inovatech-db-test
@@ -11,15 +9,15 @@ services:
     ports:
       - "5433:5432"
     tmpfs:
-      - /var/lib/postgresql/data   # banco em memória — descartado ao parar
+      - /var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U inovatech -d inovatech_test"]
       interval: 3s
       timeout: 3s
       retries: 10
 
-  backend-test:
-    container_name: inovatech-api-test
+  backend-api:
+    container_name: inovatech-api-e2e
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -35,18 +33,40 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+    command: sh ./entrypoint.sh
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=2).read()\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  api-e2e:
+    container_name: inovatech-api-e2e-tests
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      E2E_API_URL: http://backend-api:8000
+      E2E_DEFAULT_PASSWORD: Inovatech@2026
+      E2E_GESTOR_LOGIN: roberto
+      E2E_RECEPCIONISTA_LOGIN: ana
+      E2E_MEDICO_LOGIN: carlos
+      E2E_PACIENTE_LOGIN: maria
+      E2E_PACIENTE_JOAO_LOGIN: joao
+    depends_on:
+      backend-api:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
       - test-reports:/app/reports
     command: >
       sh -c "
         pip install -r requirements-test.txt -q &&
-        pytest
-          --cov=app
-          --cov-report=html:reports/coverage
-          --cov-report=term-missing
-          --html=reports/report.html
-          --self-contained-html
-          -v
-          --tb=short
+        pytest tests_e2e
       "
 
 volumes:

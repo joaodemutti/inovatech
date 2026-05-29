@@ -25,3 +25,34 @@ Not all features are covered in the frontend.
 Implemented at a basic level: login/logout, dashboard KPIs, patients, doctors, consultations calendar, prontuarios with laudo release, finance indicators/list/status, ponto list/create/totals, admin users/logs, portal consultas/laudos, and Excel export in several modules.
 
 Missing or incomplete: Excel import, PDF download, agenda status actions, strict role protection, offline mode, backup UI/automation visibility, admin permissions, advanced module UX features, and a passing build/test setup.
+
+
+
+*Test Coverage*
+
+No. The project has test coverage scaffolding for most modules, but the whole system is not covered.
+
+Current state:
+
+- Backend has pytest files for auth, users, patients, doctors, consultas, prontuarios, finance, ponto, dashboard, admin, Excel, and portal.
+- Frontend has 73 Playwright tests discovered across 11 spec files.
+- Backend tests are not runnable in the active Python env right now: `python -m pytest --collect-only -q` failed because `pytest` is not installed.
+- Frontend test discovery works: `npm run test -- --list` listed 73 tests.
+
+Main gaps:
+
+- No real test for Excel import success/persistence across entities.
+- No frontend test for Excel import UI because the UI is missing.
+- No test proving `consulta -> status realizada -> financeiro criado`.
+- No test proving `confirmada -> WhatsApp/log behavior`.
+- Portal test expects JSON download, not real PDF/blob download.
+- No frontend `portal.spec.ts`.
+- No offline/cache tests.
+- Role tests are incomplete; frontend only checks gestor positive paths, not denied access for recepcionista/medico/paciente.
+- No strong tests for agenda status workflow in UI.
+- No precise tests for ponto classifications: falta, atraso, normal, h_extra.
+- No tests for universal audit logging on every action and failure path.
+- No tests for automatic daily backup, only manual `/admin/backup`.
+- Many frontend tests assert that tables/buttons exist, but do not validate full business flows.
+
+So the system is partially covered, mostly at smoke/CRUD level. It is not covered end-to-end against the full README requirements.

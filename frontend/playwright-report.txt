@@ -1,0 +1,413 @@
+PLAYWRIGHT TEST REPORT
+======================
+Total tests: 73
+
+[PASSED]  > setup > auth.setup.ts > autenticar como gestor
+
+[FAILED]  > auth > specs\auth.spec.ts > Autenticação > exibe tela de login com logo e campos
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('INOVATECH')
+Expected: visible
+Error: strict mode violation: getByText('INOVATECH') resolved to 2 elements:
+    1) <h1 class="text-2xl font-bold text-white">INOVATECH</h1> aka getByRole('heading', { name: 'INOVATECH' })
+    2) <p class="text-center text-indigo-400 text-xs mt-6">INOVATECH © 2026 — SENAI Mariano Ferraz</p> aka getByText('INOVATECH © 2026 — SENAI')
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByText('INOVATECH')
+
+
+[PASSED]  > auth > specs\auth.spec.ts > Autenticação > login com credenciais válidas redireciona para dashboard
+
+[FAILED]  > auth > specs\auth.spec.ts > Autenticação > login com senha errada exibe mensagem de erro
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('[class*="red"]').filter({ hasText: /inválid/i })
+Expected: visible
+Error: strict mode violation: locator('[class*="red"]').filter({ hasText: /inválid/i }) resolved to 2 elements:
+    1) <div class="flex items-center gap-2 p-3 rounded-xl bg-red-500/20 border border-red-400/30">…</div> aka locator('div').filter({ hasText: /^Credenciais inválidas$/ })
+    2) <p class="text-red-300 text-sm">Credenciais inválidas</p> aka getByText('Credenciais inválidas')
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('[class*="red"]').filter({ hasText: /inválid/i })
+
+
+[PASSED]  > auth > specs\auth.spec.ts > Autenticação > campos obrigatórios bloqueiam envio
+
+[PASSED]  > auth > specs\auth.spec.ts > Autenticação > rota protegida redireciona para login se não autenticado
+
+[FAILED]  > auth > specs\auth.spec.ts > Autenticação > botão mostrar/ocultar senha funciona
+Error:
+Error: expect(locator).toHaveAttribute(expected) failed
+
+Locator:  getByPlaceholder('Senha')
+Expected: "text"
+Received: "password"
+Timeout:  5000ms
+
+Call log:
+  - Expect "toHaveAttribute" with timeout 5000ms
+  - waiting for getByPlaceholder('Senha')
+    14 × locator resolved to <input type="password" name="password" placeholder="Senha" autocomplete="current-password" class="flex-1 bg-transparent text-white placeholder:text-indigo-400 outline-none text-sm"/>
+       - unexpected value "password"
+
+
+[FAILED]  > auth > specs\roles.spec.ts > Controle de Acesso por Perfil > gestor acessa Financeiro
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Receita Paga')
+Expected: visible
+Timeout: 8000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 8000ms
+  - waiting for getByText('Receita Paga')
+
+
+[FAILED]  > auth > specs\roles.spec.ts > Controle de Acesso por Perfil > gestor acessa Administração
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('tab', { name: 'Usuários' })
+Expected: visible
+Timeout: 8000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 8000ms
+  - waiting for getByRole('tab', { name: 'Usuários' })
+
+
+[PASSED]  > auth > specs\roles.spec.ts > Controle de Acesso por Perfil > gestor vê botão Novo Médico
+
+[PASSED]  > auth > specs\roles.spec.ts > Controle de Acesso por Perfil > gestor vê todos os itens do sidebar
+
+[FAILED]  > gestor > specs\admin.spec.ts > Administração > exibe tabs Usuários e Log de Auditoria
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('tab', { name: 'Usuários' })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('tab', { name: 'Usuários' })
+
+
+[TIMEDOUT]  > gestor > specs\admin.spec.ts > Administração > tab Usuários exibe tabela
+Error:
+Test timeout of 30000ms exceeded.
+
+[FAILED]  > gestor > specs\admin.spec.ts > Administração > tabela de usuários tem colunas corretas
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('columnheader', { name: 'Nome' })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('columnheader', { name: 'Nome' })
+
+
+[TIMEDOUT]  > gestor > specs\admin.spec.ts > Administração > botão Novo Usuário abre dialog
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\admin.spec.ts > Administração > dialog de criação tem campos obrigatórios
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\admin.spec.ts > Administração > tab Log de Auditoria exibe tabela de logs
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\admin.spec.ts > Administração > filtro de módulo funciona na auditoria
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\admin.spec.ts > Administração > filtro de resultado funciona na auditoria
+Error:
+Test timeout of 30000ms exceeded.
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > exibe calendário FullCalendar
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > exibe legenda de status com cores
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > exibe botão Nova Consulta
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > abre dialog de nova consulta
+
+[FAILED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > dialog de consulta tem campos obrigatórios
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('dialog').getByLabel('Data')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('dialog').getByLabel('Data')
+
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > alterna entre vistas do calendário
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > navega entre meses no calendário
+
+[PASSED]  > gestor > specs\consultas.spec.ts > Agenda de Consultas > exporta Excel de consultas
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > exibe os 4 cards KPI
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > exibe gráficos financeiros
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > exibe sidebar com navegação
+
+[FAILED]  > gestor > specs\dashboard.spec.ts > Dashboard > sidebar colapsa ao clicar no botão
+Error:
+Error: expect(locator).not.toBeVisible() failed
+
+Locator:  getByText('Clínica Vida Plena')
+Expected: not visible
+Received: visible
+Timeout:  5000ms
+
+Call log:
+  - Expect "not toBeVisible" with timeout 5000ms
+  - waiting for getByText('Clínica Vida Plena')
+    14 × locator resolved to <p class="text-indigo-300 text-xs">Clínica Vida Plena</p>
+       - unexpected value "visible"
+
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > exibe tabela de consultas de hoje
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > exibe lista de pacientes recentes
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > navega para Pacientes via sidebar
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > navega para Consultas via sidebar
+
+[PASSED]  > gestor > specs\dashboard.spec.ts > Dashboard > logout redireciona para login
+
+[FAILED]  > gestor > specs\financeiro.spec.ts > Financeiro > exibe 4 cards de indicadores financeiros
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Receita Paga')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByText('Receita Paga')
+
+
+[FAILED]  > gestor > specs\financeiro.spec.ts > Financeiro > exibe gráfico de pizza de distribuição
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Distribuição')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByText('Distribuição')
+
+
+[FAILED]  > gestor > specs\financeiro.spec.ts > Financeiro > exibe lista de lançamentos
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Lançamentos')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByText('Lançamentos')
+
+
+[TIMEDOUT]  > gestor > specs\financeiro.spec.ts > Financeiro > botão Novo Lançamento abre dialog
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\financeiro.spec.ts > Financeiro > dialog de lançamento tem campos obrigatórios
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\financeiro.spec.ts > Financeiro > filtro de status filtra lançamentos
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\financeiro.spec.ts > Financeiro > exporta Excel financeiro
+Error:
+Test timeout of 30000ms exceeded.
+
+[PASSED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > exibe tabela de médicos
+
+[PASSED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > exibe botão Novo Médico para gestor
+
+[PASSED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > abre dialog de criação
+
+[TIMEDOUT]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > cria médico com dados válidos
+Error:
+Test timeout of 30000ms exceeded.
+
+[PASSED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > valida campos obrigatórios
+
+[FAILED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > busca filtra médicos
+Error:
+Error: locator.fill: Error: strict mode violation: getByPlaceholder('Buscar...') resolved to 2 elements:
+    1) <input placeholder="Buscar..." class="bg-transparent text-sm text-slate-600 outline-none w-full placeholder:text-slate-400"/> aka getByRole('banner').getByRole('textbox', { name: 'Buscar...' })
+    2) <input value="" placeholder="Buscar..." class="bg-transparent text-sm outline-none flex-1 placeholder:text-slate-400 text-slate-700"/> aka getByRole('main').getByRole('textbox', { name: 'Buscar...' })
+
+Call log:
+  - waiting for getByPlaceholder('Buscar...')
+
+
+[FAILED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > badge de especialidade visível na tabela
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('row').filter({ hasNot: locator('th') }).first().locator('[class*="badge"], [class*="Badge"]').first()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('row').filter({ hasNot: locator('th') }).first().locator('[class*="badge"], [class*="Badge"]').first()
+
+
+[PASSED]  > gestor > specs\medicos.spec.ts > Gestão de Médicos > exporta Excel
+
+[PASSED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > exibe tabela de pacientes
+
+[PASSED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > exibe botão Novo Paciente
+
+[PASSED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > abre dialog ao clicar em Novo Paciente
+
+[TIMEDOUT]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > cria paciente com dados válidos
+Error:
+Test timeout of 30000ms exceeded.
+
+[TIMEDOUT]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > valida CPF obrigatório
+Error:
+Test timeout of 30000ms exceeded.
+
+[FAILED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > busca filtra pacientes por nome
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('table')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('table')
+
+
+[PASSED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > filtro de status funciona
+
+[PASSED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > abre dialog de edição ao clicar no ícone
+
+[FAILED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > dialog de edição pré-preenche dados do paciente
+Error:
+Error: expect(locator).not.toHaveValue(expected) failed
+
+Locator: getByLabel('Nome Completo')
+Expected: not ""
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "not toHaveValue" with timeout 5000ms
+  - waiting for getByLabel('Nome Completo')
+
+
+[PASSED]  > gestor > specs\pacientes.spec.ts > Gestão de Pacientes > exporta Excel (gestor)
+
+[PASSED]  > gestor > specs\ponto.spec.ts > Controle de Ponto > exibe cards de resumo
+
+[FAILED]  > gestor > specs\ponto.spec.ts > Controle de Ponto > exibe filtros de data
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByLabel('Até')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByLabel('Até')
+
+
+[FAILED]  > gestor > specs\ponto.spec.ts > Controle de Ponto > filtro de data filtra registros
+Error:
+Error: locator.fill: Error: Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]
+Call log:
+  - waiting for getByLabel('De')
+    - locator resolved to <button id="next-logo" aria-haspopup="menu" data-next-mark="true" aria-expanded="false" aria-label="Open Next.js Dev Tools" data-nextjs-dev-tools-button="true" aria-controls="nextjs-dev-tools-menu">…</button>
+    - fill("2026-05-29")
+  - attempting fill action
+    - waiting for element to be visible, enabled and editable
+
+
+[PASSED]  > gestor > specs\ponto.spec.ts > Controle de Ponto > botão Registrar abre dialog
+
+[FAILED]  > gestor > specs\ponto.spec.ts > Controle de Ponto > dialog de ponto tem campos de entrada e saída
+Error:
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('dialog').getByLabel('Entrada')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('dialog').getByLabel('Entrada')
+
+
+[PASSED]  > gestor > specs\ponto.spec.ts > Controle de Ponto > exporta Excel de ponto (gestor)
+
+[PASSED]  > gestor > specs\prontuarios.spec.ts > Prontuários > exibe tabela de prontuários
+
+[PASSED]  > gestor > specs\prontuarios.spec.ts > Prontuários > exibe botão exportar para gestor
+
+[FAILED]  > gestor > specs\prontuarios.spec.ts > Prontuários > busca por paciente funciona
+Error:
+Error: locator.fill: Error: strict mode violation: getByPlaceholder(/Buscar/i) resolved to 2 elements:
+    1) <input placeholder="Buscar..." class="bg-transparent text-sm text-slate-600 outline-none w-full placeholder:text-slate-400"/> aka getByRole('textbox', { name: 'Buscar...' })
+    2) <input value="" placeholder="Buscar por paciente ou CID..." class="bg-transparent text-sm outline-none flex-1 placeholder:text-slate-400 text-slate-700"/> aka getByRole('textbox', { name: 'Buscar por paciente ou CID...' })
+
+Call log:
+  - waiting for getByPlaceholder(/Buscar/i)
+
+
+[PASSED]  > gestor > specs\prontuarios.spec.ts > Prontuários > colunas corretas na tabela
+
+[PASSED]  > gestor > specs\prontuarios.spec.ts > Prontuários > dialog de prontuário abre ao clicar em editar
+
+[PASSED]  > gestor > specs\prontuarios.spec.ts > Prontuários > exporta Excel de prontuários
+
+======================
+Final status: FAILED
