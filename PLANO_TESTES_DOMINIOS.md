@@ -2,26 +2,32 @@
 
 ## Objetivo
 
-Este documento apresenta um cronograma simplificado de testes para o sistema INOVATECH, organizado por fases de projeto academico.
+Este documento apresenta um cronograma simplificado de testes para o sistema INOVATECH, com foco nas funcionalidades principais do projeto.
 
-O plano considera tres niveis principais de teste:
-
-- **Testes unitarios**: validam pequenas partes do sistema de forma isolada.
-- **Testes de integracao/conjunto**: validam a comunicacao entre modulos, banco de dados e regras de negocio.
-- **Testes E2E**: validam fluxos completos do usuario usando API real ou interface web.
+O objetivo e demonstrar como o sistema sera validado durante o desenvolvimento, considerando regras de negocio, integracao entre modulos e fluxos completos de uso.
 
 ---
 
-## Cronograma Resumido
+## Visao Geral dos Tipos de Teste
 
-| Fase | Periodo sugerido | Tipo de teste | Objetivo principal |
-|---|---|---|---|
-| 1 | Semana 1 | Planejamento | Definir escopo, ambiente e criterios de teste |
-| 2 | Semana 2 | Testes unitarios | Validar regras isoladas do backend |
-| 3 | Semana 3 | Integracao/conjunto | Validar modulos trabalhando juntos |
-| 4 | Semana 4 | API E2E | Validar fluxos completos pela API real |
-| 5 | Semana 5 | Frontend E2E | Validar fluxos principais pela interface |
-| 6 | Semana 6 | Revisao e relatorios | Executar regressao, documentar resultados e pendencias |
+| Tipo de teste | Finalidade |
+|---|---|
+| Testes unitarios | Verificar regras pequenas e isoladas do sistema |
+| Testes de integracao/conjunto | Verificar se diferentes partes do sistema funcionam juntas |
+| Testes funcionais/E2E | Verificar fluxos completos, como o usuario usaria o sistema |
+
+---
+
+## Cronograma por Fases
+
+| Fase | Tema | Objetivo |
+|---|---|---|
+| 1 | Planejamento dos testes | Definir funcionalidades, perfis de usuario e criterios de validacao |
+| 2 | Testes unitarios | Validar regras internas importantes |
+| 3 | Testes de integracao/conjunto | Validar comunicacao entre modulos |
+| 4 | Testes funcionais do backend | Validar fluxos completos pela API do sistema |
+| 5 | Testes funcionais do frontend | Validar fluxos principais pela interface |
+| 6 | Revisao final | Consolidar resultados, falhas e melhorias |
 
 ---
 
@@ -29,21 +35,26 @@ O plano considera tres niveis principais de teste:
 
 ### Objetivo
 
-Preparar a estrategia de testes e o ambiente necessario para executar os testes com seguranca.
+Definir o que precisa ser testado e quais funcionalidades sao mais importantes para o funcionamento do sistema.
 
-### Atividades
+### Funcionalidades consideradas
 
-| Atividade | Resultado esperado |
+| Area do sistema | O que deve ser validado |
 |---|---|
-| Definir funcionalidades principais | Lista de dominios a serem testados |
-| Separar tipos de teste | Unitario, integracao/conjunto e E2E |
-| Criar banco de teste | Ambiente isolado para testes |
-| Configurar Docker de teste | Banco, backend e runner de testes funcionando |
-| Definir usuarios de teste | Gestor, recepcionista, medico e paciente |
+| Autenticacao | Entrada e saida de usuarios no sistema |
+| Perfis de acesso | Permissoes de gestor, recepcionista, medico e paciente |
+| Cadastro | Pacientes e medicos |
+| Agenda | Consultas e alteracao de status |
+| Financeiro | Lancamentos, pagamentos e indicadores |
+| Prontuario | Registro medico e liberacao de laudos |
+| Portal do Paciente | Visualizacao de consultas e laudos pelo paciente |
+| Ponto | Controle de presenca, atraso, falta e hora extra |
+| Administracao | Auditoria e backup |
+| Excel | Importacao e exportacao de dados |
 
 ### Entrega da fase
 
-Ambiente de teste preparado e escopo dos testes definido.
+Lista das funcionalidades que serao validadas no projeto.
 
 ---
 
@@ -51,26 +62,22 @@ Ambiente de teste preparado e escopo dos testes definido.
 
 ### Objetivo
 
-Validar regras pequenas e isoladas do sistema, sem depender da interface ou de um fluxo completo.
+Validar regras individuais do sistema antes de testar os fluxos completos.
 
-### O que testar
+### Exemplos de testes unitarios
 
-| Modulo | Exemplos de testes unitarios |
+| Funcionalidade | Regra a validar |
 |---|---|
-| Autenticacao | Geracao e validacao de senha, token e sessao |
-| Financeiro | Calculo de totais, valores pagos, pendentes e atrasados |
-| Ponto | Calculo de horas trabalhadas, atraso, falta e hora extra |
-| Agenda | Validacao de status da consulta |
-| Prontuario | Regra de liberacao de laudo |
-| Excel | Validacao de colunas obrigatorias |
-
-### Exemplo de criterio de sucesso
-
-Uma funcao que calcula horas extras deve retornar o valor correto para diferentes horarios de entrada e saida.
+| Autenticacao | Senha correta permite login; senha incorreta deve falhar |
+| Financeiro | Total pago, pendente e atrasado deve ser calculado corretamente |
+| Ponto | Sistema identifica situacoes como normal, atraso, falta e hora extra |
+| Agenda | Consulta deve aceitar apenas status validos |
+| Prontuario | Laudo so deve aparecer para o paciente quando for liberado |
+| Excel | Planilha deve conter colunas obrigatorias |
 
 ### Entrega da fase
 
-Suite inicial de testes unitarios cobrindo regras de negocio importantes.
+Testes das principais regras de negocio de forma isolada.
 
 ---
 
@@ -78,175 +85,108 @@ Suite inicial de testes unitarios cobrindo regras de negocio importantes.
 
 ### Objetivo
 
-Validar se diferentes partes do sistema funcionam corretamente quando usadas em conjunto.
+Validar se os modulos do sistema funcionam corretamente quando usados em conjunto.
 
-### O que testar
+### Exemplos de testes de integracao
 
-| Integracao | Cenario esperado |
+| Modulos envolvidos | Cenario |
 |---|---|
-| Cadastro + Banco | Criar paciente e verificar persistencia no banco |
-| Cadastro + Agenda | Criar consulta usando paciente e medico cadastrados |
-| Agenda + Financeiro | Consulta realizada gera lancamento financeiro |
-| Prontuario + Portal | Laudo liberado aparece para o paciente |
-| Autenticacao + Permissoes | Usuario acessa apenas rotas permitidas |
-| Excel + Cadastro | Importacao de pacientes salva dados corretamente |
-
-### Diferenca para teste unitario
-
-No teste unitario, cada regra e testada sozinha.  
-No teste de integracao/conjunto, o foco e verificar se os modulos funcionam juntos.
+| Cadastro + Agenda | Criar uma consulta usando paciente e medico cadastrados |
+| Agenda + Financeiro | Consulta realizada deve gerar lancamento financeiro |
+| Prontuario + Portal | Laudo liberado pelo medico deve aparecer para o paciente |
+| Autenticacao + Perfis | Usuario deve acessar apenas funcionalidades permitidas |
+| Excel + Cadastro | Dados importados de planilha devem aparecer no cadastro |
+| Admin + Auditoria | Acoes importantes devem gerar registro de auditoria |
 
 ### Entrega da fase
 
-Testes comprovando que os principais modulos se comunicam corretamente.
+Confirmacao de que os modulos principais trabalham corretamente em conjunto.
 
 ---
 
-## Fase 4: Testes E2E de API
+## Fase 4: Testes Funcionais do Backend
 
 ### Objetivo
 
-Validar fluxos completos chamando a API real por HTTP, como um cliente externo faria.
+Validar os fluxos completos das funcionalidades principais do sistema.
 
-### Ferramentas
+### Fluxos testados
 
-| Ferramenta | Uso |
+| Dominio | Fluxo esperado |
 |---|---|
-| `pytest` | Executar os testes |
-| `httpx` | Fazer chamadas HTTP para a API |
-| PostgreSQL de teste | Banco isolado |
-| Docker Compose | Subir banco, backend e runner |
-
-### Dominios testados
-
-| Dominio | Fluxos principais |
-|---|---|
-| Autenticacao | Login, logout, usuario atual e rota protegida |
-| Perfis | Acesso de gestor, recepcionista, medico e paciente |
-| Cadastro | Criar, listar, atualizar e inativar pacientes/medicos |
-| Agenda | Criar, confirmar, cancelar e realizar consulta |
-| Financeiro | Lancamento manual, pagamento e indicadores |
-| Prontuario | Criacao, atualizacao e liberacao de laudo |
-| Portal do Paciente | Visualizar consultas e laudos permitidos |
-| Ponto | Normal, atraso, falta, hora extra e totais |
-| Admin/Auditoria | Logs, falhas de login e backup |
-| Excel | Exportacao e importacao de planilhas |
+| Autenticacao | Usuario faz login, consulta seus dados e faz logout |
+| Perfis | Cada tipo de usuario acessa apenas o que e permitido |
+| Cadastro | Criar, listar, atualizar e inativar pacientes |
+| Cadastro medico | Criar, listar e atualizar medicos |
+| Agenda | Criar, confirmar, cancelar e concluir consultas |
+| Financeiro | Criar lancamento, registrar pagamento e visualizar indicadores |
+| Prontuario | Medico cria prontuario e libera laudo |
+| Portal do Paciente | Paciente visualiza apenas seus proprios dados |
+| Ponto | Registrar normal, atraso, falta e hora extra |
+| Administracao | Consultar auditoria e registrar backup |
+| Excel | Exportar dados e importar registros validos |
 
 ### Entrega da fase
 
-Suite de testes E2E de API validando os fluxos principais do backend.
+Validacao dos fluxos principais do sistema pelo lado do backend.
 
 ---
 
-## Fase 5: Testes E2E de Frontend
+## Fase 5: Testes Funcionais do Frontend
 
 ### Objetivo
 
-Validar se o usuario consegue executar os principais fluxos pela interface web.
+Validar se o usuario consegue usar o sistema pela interface de forma correta.
 
-### Ferramenta
+### Fluxos testados
 
-Playwright.
-
-### O que testar
-
-| Tela/fluxo | Resultado esperado |
+| Tela ou modulo | O que deve funcionar |
 |---|---|
-| Login | Usuario entra no sistema |
-| Dashboard | Indicadores aparecem corretamente |
+| Login | Usuario consegue entrar no sistema |
+| Dashboard | Indicadores principais aparecem corretamente |
 | Pacientes | Criar, listar e editar paciente |
 | Medicos | Criar, listar e editar medico |
-| Consultas | Criar e alterar status de consulta |
+| Consultas | Criar consulta e alterar status |
 | Financeiro | Visualizar lancamentos e indicadores |
-| Portal do Paciente | Ver consultas e laudos permitidos |
-| Permissoes na interface | Menus e telas respeitam o perfil do usuario |
+| Prontuarios | Registrar atendimento e liberar laudo |
+| Portal do Paciente | Paciente visualiza consultas e laudos permitidos |
+| Navegacao | Menus exibem apenas opcoes permitidas para cada perfil |
 
 ### Entrega da fase
 
-Testes automatizados simulando o uso real do sistema no navegador.
+Validacao dos fluxos principais do sistema do ponto de vista do usuario.
 
 ---
 
-## Fase 6: Revisao, Regressao e Relatorios
+## Fase 6: Revisao Final
 
 ### Objetivo
 
-Executar todos os testes, analisar falhas e documentar o estado final do projeto.
+Reunir os resultados dos testes e identificar o que esta funcionando, o que precisa de correcao e o que ainda falta implementar.
 
 ### Atividades
 
-| Atividade | Resultado esperado |
+| Atividade | Resultado |
 |---|---|
-| Rodar testes unitarios | Verificar regras isoladas |
-| Rodar testes de integracao/conjunto | Verificar comunicacao entre modulos |
-| Rodar testes E2E de API | Verificar fluxos completos do backend |
-| Rodar testes E2E de frontend | Verificar fluxos completos pela interface |
-| Gerar relatorios | Evidencias para entrega academica |
-| Documentar falhas conhecidas | Lista clara do que falta implementar |
+| Executar testes unitarios | Confirmar regras individuais |
+| Executar testes de integracao | Confirmar comunicacao entre modulos |
+| Executar testes funcionais | Confirmar fluxos completos |
+| Registrar falhas encontradas | Listar problemas e funcionalidades incompletas |
+| Gerar relatorio final | Entregar evidencia dos testes realizados |
 
 ### Entrega da fase
 
-Relatorio final com testes executados, resultados obtidos e pendencias identificadas.
+Relatorio final com resumo dos testes, resultados e pendencias.
 
 ---
 
-## Organizacao dos Testes por Tipo
+## Prioridade das Funcionalidades
 
-### Testes unitarios
-
-```text
-backend/
-  tests_unit/
-    test_auth_service.py
-    test_financeiro_service.py
-    test_ponto_service.py
-    test_excel_service.py
-```
-
-### Testes de integracao/conjunto
-
-```text
-backend/
-  tests_integration/
-    test_cadastro_agenda.py
-    test_agenda_financeiro.py
-    test_prontuario_portal.py
-    test_excel_import.py
-```
-
-### Testes E2E de API
-
-```text
-backend/
-  tests_e2e/
-    test_auth_roles.py
-    test_cadastro.py
-    test_agenda_financeiro.py
-    test_prontuario_portal.py
-    test_ponto_admin_excel.py
-```
-
-### Testes E2E de frontend
-
-```text
-frontend/
-  tests/
-    specs/
-      auth.spec.ts
-      dashboard.spec.ts
-      pacientes.spec.ts
-      consultas.spec.ts
-```
-
----
-
-## Prioridade de Implementacao
-
-| Prioridade | Testes |
+| Prioridade | Funcionalidades |
 |---|---|
-| Alta | Autenticacao, permissoes, cadastro, agenda e financeiro |
+| Alta | Autenticacao, perfis, cadastro, agenda e financeiro |
 | Media | Prontuario, portal do paciente, ponto e auditoria |
-| Baixa | Excel completo, relatorios detalhados e testes visuais |
+| Baixa | Excel, relatorios detalhados e melhorias visuais |
 
 ---
 
@@ -254,20 +194,29 @@ frontend/
 
 O plano de testes sera considerado satisfatorio quando:
 
-- Existirem testes unitarios para regras importantes.
-- Existirem testes de integracao/conjunto para os principais modulos.
-- Existirem testes E2E de API para os fluxos principais.
-- Existirem testes E2E de frontend para os fluxos mais usados.
-- Os testes forem executados em ambiente isolado.
-- Os resultados forem registrados em relatorios.
-- As falhas conhecidas forem documentadas.
+- As principais regras de negocio forem testadas.
+- Os modulos mais importantes forem testados em conjunto.
+- Os fluxos principais do usuario forem validados.
+- Cada perfil de usuario tiver suas permissoes verificadas.
+- As falhas encontradas forem documentadas.
+- O projeto tiver evidencias dos testes realizados.
 
 ---
 
-## Comando Principal para Testes E2E de API
+## Possiveis Pendencias Identificadas
 
-```bash
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from api-e2e
-```
+| Funcionalidade | Possivel pendencia |
+|---|---|
+| Permissoes por perfil | Algumas telas ou rotas podem permitir acesso indevido |
+| Importacao de Excel | A importacao pode validar dados, mas nao salvar corretamente |
+| Laudo em PDF | O sistema pode ainda nao gerar arquivo PDF real |
+| Auditoria | Algumas acoes podem nao gerar log |
+| Interface | Algumas funcionalidades podem existir no backend, mas nao estar completas no frontend |
 
-Esse comando sobe o banco de teste, inicia o backend real e executa os testes E2E da API.
+---
+
+## Conclusao
+
+Este cronograma organiza os testes do INOVATECH de forma progressiva: primeiro validando regras pequenas, depois a integracao entre modulos e, por fim, os fluxos completos do usuario.
+
+Essa abordagem ajuda a demonstrar, em um contexto academico de engenharia de software, que o projeto foi avaliado de forma planejada e funcional.
