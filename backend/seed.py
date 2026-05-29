@@ -39,6 +39,9 @@ def seed(db: Session):
         {"nome": "Dr. Carlos Lima", "perfil": "medico", "login": "carlos", "email": "carlos@clinica.com"},
         {"nome": "Dra. Renata Souza", "perfil": "medico", "login": "renata", "email": "renata@clinica.com"},
         {"nome": "Dr. Marcos Teles", "perfil": "medico", "login": "marcos", "email": "marcos@clinica.com"},
+        # email deve coincidir com Pessoa.email para o portal funcionar (_get_paciente_do_usuario)
+        {"nome": "Maria Oliveira", "perfil": "paciente", "login": "maria", "email": "maria@email.com"},
+        {"nome": "João Silva", "perfil": "paciente", "login": "joao", "email": "joao@email.com"},
     ]
     usuarios = []
     for u in usuarios_dados:
@@ -196,6 +199,8 @@ def seed(db: Session):
     print(f"  Login gestor:        roberto / {SENHA_PADRAO}")
     print(f"  Login recepcionista: ana / {SENHA_PADRAO}")
     print(f"  Login médico:        carlos / {SENHA_PADRAO}")
+    print(f"  Login paciente:      maria  / {SENHA_PADRAO}")
+    print(f"  Login paciente:      joao   / {SENHA_PADRAO}")
 
 
 if __name__ == "__main__":
