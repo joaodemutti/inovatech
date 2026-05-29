@@ -55,7 +55,7 @@ export function AppLayout({ children, title, subtitle, allowedRoles }: AppLayout
                 <Shield className="w-8 h-8 text-red-400" />
               </div>
               <h3 className="text-slate-700 font-semibold text-lg">Acesso Restrito</h3>
-              <p className="text-slate-400 text-sm mt-1">Seu perfil nao possui permissao para acessar esta area.</p>
+              <p className="text-slate-400 text-sm mt-1">Seu perfil não possui permissão para acessar esta área.</p>
             </div>
           ) : children}
         </main>

@@ -259,7 +259,7 @@ def importar_pacientes(db: Session, registros: list[dict]) -> tuple[int, list[st
         try:
             cpf = _texto_obrigatorio(registro, "cpf")
             if paciente_repository.buscar_por_cpf(db, cpf):
-                erros.append(f"Linha {linha}: CPF ja cadastrado")
+                erros.append(f"Linha {linha}: CPF já cadastrado")
                 continue
             pessoa_dados = {
                 "nome_completo": _texto_obrigatorio(registro, "nome_completo"),
@@ -290,10 +290,10 @@ def importar_medicos(db: Session, registros: list[dict]) -> tuple[int, list[str]
             cpf = _texto_obrigatorio(registro, "cpf")
             crm = _texto_obrigatorio(registro, "crm")
             if medico_repository.buscar_por_cpf(db, cpf):
-                erros.append(f"Linha {linha}: CPF ja cadastrado")
+                erros.append(f"Linha {linha}: CPF já cadastrado")
                 continue
             if medico_repository.buscar_por_crm(db, crm):
-                erros.append(f"Linha {linha}: CRM ja cadastrado")
+                erros.append(f"Linha {linha}: CRM já cadastrado")
                 continue
             pessoa_dados = {
                 "nome_completo": _texto_obrigatorio(registro, "nome_completo"),
@@ -426,10 +426,10 @@ def importar_usuarios(db: Session, registros: list[dict]) -> tuple[int, list[str
             login = _texto_obrigatorio(registro, "login")
             email = _texto_obrigatorio(registro, "email")
             if usuario_repository.buscar_por_login(db, login):
-                erros.append(f"Linha {linha}: login ja cadastrado")
+                erros.append(f"Linha {linha}: login já cadastrado")
                 continue
             if usuario_repository.buscar_por_email(db, email):
-                erros.append(f"Linha {linha}: email ja cadastrado")
+                erros.append(f"Linha {linha}: email já cadastrado")
                 continue
             modulos = _texto(registro, "modulos_permitidos")
             dados = {
@@ -560,13 +560,13 @@ def _booleano(registro: dict, campo: str) -> bool | None:
 def _enum(valor: str, permitidos: set[str], campo: str) -> str:
     valor_normalizado = valor.strip().lower()
     if valor_normalizado not in permitidos:
-        raise ValueError(f"{campo} invalido")
+        raise ValueError(f"{campo} inválido")
     return valor_normalizado
 
 
 def _existe(db: Session, modelo, item_id: int, campo: str) -> None:
     if not db.get(modelo, item_id):
-        raise ValueError(f"{campo} nao encontrado")
+        raise ValueError(f"{campo} não encontrado")
 
 
 def _calcular_ponto(dados: dict) -> None:

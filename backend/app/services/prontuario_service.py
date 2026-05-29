@@ -29,7 +29,7 @@ def criar_prontuario(
     if current_user.perfil == "medico":
         medico = medico_repository.buscar_por_email(db, current_user.email)
         if not medico:
-            raise HTTPException(status_code=404, detail="Medico nao encontrado para este usuario")
+            raise HTTPException(status_code=404, detail="Médico não encontrado para este usuário")
         dados["medico_id"] = medico.id
     elif not dados.get("medico_id"):
         raise HTTPException(status_code=422, detail="medico_id obrigatorio")
