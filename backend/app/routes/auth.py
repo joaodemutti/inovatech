@@ -27,7 +27,7 @@ def login(
         value=token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",
         max_age=60 * settings.access_token_expire_minutes,
     )
     return {"message": "Login realizado com sucesso"}
