@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { financeiroService } from '@/services/financeiro.service';
+import { useRole } from '@/hooks/useRole';
 import { pacientesService } from '@/services/pacientes.service';
 import { excelService } from '@/services/excel.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -128,7 +129,22 @@ function LancamentoDialog({ lancamento, open, onClose }: { lancamento?: Lancamen
 }
 
 export default function FinanceiroPage() {
+  const { isGestor } = useRole();
   const [statusFilter, setStatusFilter] = useState('');
+
+  if (!isGestor) {
+    return (
+      <AppLayout title="Financeiro">
+        <div className="flex flex-col items-center justify-center py-32 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
+            <DollarSign className="w-8 h-8 text-red-400" />
+          </div>
+          <h3 className="text-slate-700 font-semibold text-lg">Acesso Restrito</h3>
+          <p className="text-slate-400 text-sm mt-1">Esta área é exclusiva para gestores.</p>
+        </div>
+      </AppLayout>
+    );
+  }
   const [dialog, setDialog] = useState<{ open: boolean; lancamento?: Lancamento }>({ open: false });
   const qc = useQueryClient();
 
@@ -237,7 +253,7 @@ export default function FinanceiroPage() {
         </Card>
       </div>
 
-      <LancamentoDialog open={dialog.open} lancamento={dialog.lancamento} onClose={() => setDialog({ open: false })} />
+      <LancamentoDialog key={dialog.lancamento?.id ?? 'new'} open={dialog.open} lancamento={dialog.lancamento} onClose={() => setDialog({ open: false })} />
     </AppLayout>
   );
 }

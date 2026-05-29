@@ -11,7 +11,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -23,6 +23,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { consultasService } from '@/services/consultas.service';
+import { excelService } from '@/services/excel.service';
+import { useRole } from '@/hooks/useRole';
 import { pacientesService } from '@/services/pacientes.service';
 import { medicosService } from '@/services/medicos.service';
 import type { Consulta, ConsultaStatus } from '@/types/consulta';
@@ -45,6 +47,8 @@ type FormData = z.infer<typeof schema>;
 
 function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: Consulta; defaultDate?: string; open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
+  const { can } = useRole();
+  const canWrite = can('gestor', 'recepcionista');
   const isEdit = !!consulta;
 
   const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data) });
@@ -136,7 +140,7 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
           </div>
 
           <DialogFooter className="gap-2">
-            {isEdit && (
+            {isEdit && canWrite && (
               <Button type="button" variant="destructive" size="sm" onClick={() => deleteMutation.mutate()}>
                 Cancelar Consulta
               </Button>
@@ -151,6 +155,8 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
 }
 
 export default function ConsultasPage() {
+  const { isGestor, can } = useRole();
+  const canWrite = can('gestor', 'recepcionista');
   const [dialog, setDialog] = useState<{ open: boolean; consulta?: Consulta; defaultDate?: string }>({ open: false });
 
   const { data: consultas = [] } = useQuery({
@@ -173,9 +179,18 @@ export default function ConsultasPage() {
         title="Agenda de Consultas"
         subtitle="Gerencie todos os agendamentos"
         actions={
-          <GradientButton onClick={() => setDialog({ open: true })}>
-            <Plus className="w-4 h-4" /> Nova Consulta
-          </GradientButton>
+          <>
+            {isGestor && (
+              <GradientButton variant="outline" onClick={() => excelService.export('consultas')}>
+                <Download className="w-4 h-4" /> Exportar
+              </GradientButton>
+            )}
+            {canWrite && (
+              <GradientButton onClick={() => setDialog({ open: true })}>
+                <Plus className="w-4 h-4" /> Nova Consulta
+              </GradientButton>
+            )}
+          </>
         }
       />
 
@@ -213,7 +228,7 @@ export default function ConsultasPage() {
         </motion.div>
       </Card>
 
-      <ConsultaDialog open={dialog.open} consulta={dialog.consulta} defaultDate={dialog.defaultDate} onClose={() => setDialog({ open: false })} />
+      <ConsultaDialog key={dialog.consulta?.id ?? dialog.defaultDate ?? 'new'} open={dialog.open} consulta={dialog.consulta} defaultDate={dialog.defaultDate} onClose={() => setDialog({ open: false })} />
     </AppLayout>
   );
 }

@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { pacientesService } from '@/services/pacientes.service';
 import { excelService } from '@/services/excel.service';
+import { useRole } from '@/hooks/useRole';
 import { formatCPF, formatDate } from '@/lib/utils';
 import type { Paciente } from '@/types/paciente';
 
@@ -132,6 +133,9 @@ function PacienteDialog({ paciente, open, onClose }: { paciente?: Paciente; open
 
 export default function PacientesPage() {
   const qc = useQueryClient();
+  const { can, isGestor } = useRole();
+  const canWrite = can('gestor', 'recepcionista');
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [dialog, setDialog] = useState<{ open: boolean; paciente?: Paciente }>({ open: false });
@@ -162,17 +166,20 @@ export default function PacientesPage() {
         subtitle={`${pacientes.length} pacientes cadastrados`}
         actions={
           <>
-            <GradientButton variant="outline" onClick={() => excelService.export('pacientes')}>
-              <Download className="w-4 h-4" /> Exportar
-            </GradientButton>
-            <GradientButton onClick={() => setDialog({ open: true })}>
-              <Plus className="w-4 h-4" /> Novo Paciente
-            </GradientButton>
+            {isGestor && (
+              <GradientButton variant="outline" onClick={() => excelService.export('pacientes')}>
+                <Download className="w-4 h-4" /> Exportar
+              </GradientButton>
+            )}
+            {canWrite && (
+              <GradientButton onClick={() => setDialog({ open: true })}>
+                <Plus className="w-4 h-4" /> Novo Paciente
+              </GradientButton>
+            )}
           </>
         }
       />
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-2 flex-1">
           <Search className="w-4 h-4 text-slate-400" />
@@ -187,16 +194,16 @@ export default function PacientesPage() {
 
       <Card className="overflow-hidden">
         {isLoading ? (
-          <div className="p-6 space-y-3">{[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+          <div className="p-6 space-y-3">{[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}</div>
         ) : filtered.length === 0 ? (
           <EmptyState icon={Users} title="Nenhum paciente encontrado" description="Cadastre o primeiro paciente ou ajuste os filtros."
-            action={<GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Cadastrar</GradientButton>}
+            action={canWrite ? <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Cadastrar</GradientButton> : undefined}
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                {['Nome', 'CPF', 'Telefone', 'Convênio', 'Nascimento', 'Status', ''].map(h => <TableHead key={h}>{h}</TableHead>)}
+                {['Nome', 'CPF', 'Telefone', 'Convênio', 'Nascimento', 'Status', ...(canWrite ? [''] : [])].map(h => <TableHead key={h}>{h}</TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -213,18 +220,20 @@ export default function PacientesPage() {
                   <TableCell className="text-slate-500">{p.convenio ?? 'Particular'}</TableCell>
                   <TableCell className="text-slate-500">{p.data_nascimento ? formatDate(p.data_nascimento) : '—'}</TableCell>
                   <TableCell><StatusBadge status={p.status} /></TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-purple-600 hover:bg-purple-50" onClick={() => setDialog({ open: true, paciente: p })}>
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </Button>
-                      {p.status === 'ativo' && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(p.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
+                  {canWrite && (
+                    <TableCell>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-purple-600 hover:bg-purple-50" onClick={() => setDialog({ open: true, paciente: p })}>
+                          <Edit2 className="w-3.5 h-3.5" />
                         </Button>
-                      )}
-                    </div>
-                  </TableCell>
+                        {p.status === 'ativo' && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(p.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                 </motion.tr>
               ))}
             </TableBody>
@@ -232,7 +241,9 @@ export default function PacientesPage() {
         )}
       </Card>
 
-      <PacienteDialog open={dialog.open} paciente={dialog.paciente} onClose={() => setDialog({ open: false })} />
+      {canWrite && (
+        <PacienteDialog key={dialog.paciente?.id ?? 'new'} open={dialog.open} paciente={dialog.paciente} onClose={() => setDialog({ open: false })} />
+      )}
     </AppLayout>
   );
 }

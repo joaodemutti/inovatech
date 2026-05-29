@@ -24,6 +24,7 @@ import { pontoService } from '@/services/ponto.service';
 import { usuariosService } from '@/services/usuarios.service';
 import { excelService } from '@/services/excel.service';
 import { useAuthStore } from '@/stores/auth.store';
+import { useRole } from '@/hooks/useRole';
 import { formatDate } from '@/lib/utils';
 
 const schema = z.object({
@@ -36,6 +37,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function PontoPage() {
   const user = useAuthStore(s => s.user);
+  const { isGestor } = useRole();
   const [open, setOpen] = useState(false);
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
@@ -79,14 +81,14 @@ export default function PontoPage() {
         subtitle="Registros de jornada de trabalho"
         actions={
           <>
-            <GradientButton variant="outline" onClick={() => excelService.export('ponto')}><Download className="w-4 h-4" /> Exportar</GradientButton>
+            {isGestor && <GradientButton variant="outline" onClick={() => excelService.export('ponto')}><Download className="w-4 h-4" /> Exportar</GradientButton>}
             <GradientButton onClick={() => setOpen(true)}><Plus className="w-4 h-4" /> Registrar</GradientButton>
           </>
         }
       />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <StatCard title="H. Trabalhadas" value={`${totais?.total_horas_trabalhadas?.toFixed(1) ?? 0}h`} icon={Clock} gradient="from-blue-500 to-cyan-500" delay={0} />
+        <StatCard title="H. Trabalhadas" value={`${Number(totais?.total_horas_trabalhadas ?? 0).toFixed(1)}h`} icon={Clock} gradient="from-blue-500 to-cyan-500" delay={0} />
         <StatCard title="Faltas" value={totais?.faltas ?? 0} icon={X} gradient="from-red-500 to-rose-500" delay={0.1} />
         <StatCard title="Atrasos" value={totais?.atrasos ?? 0} icon={Clock} gradient="from-amber-500 to-orange-500" delay={0.2} />
         <StatCard title="H. Extras" value={totais?.horas_extras ?? 0} icon={Clock} gradient="from-emerald-500 to-teal-500" delay={0.3} />
@@ -122,7 +124,7 @@ export default function PontoPage() {
                   <TableCell className="font-mono text-slate-700">{r.saida ?? '—'}</TableCell>
                   <TableCell className="text-slate-700">{r.h_trabalhadas != null ? `${r.h_trabalhadas}h` : '—'}</TableCell>
                   <TableCell className="text-slate-500">{r.h_esperadas}h</TableCell>
-                  <TableCell>{r.diferenca != null ? <span className={r.diferenca >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>{r.diferenca >= 0 ? '+' : ''}{r.diferenca}h</span> : '—'}</TableCell>
+                  <TableCell>{r.diferenca != null ? <span className={Number(r.diferenca) >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>{Number(r.diferenca) >= 0 ? '+' : ''}{r.diferenca}h</span> : '—'}</TableCell>
                   <TableCell>{r.situacao ? <StatusBadge status={r.situacao} /> : '—'}</TableCell>
                 </motion.tr>
               ))}

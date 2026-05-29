@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Search, FileText, CheckCircle, Edit2 } from 'lucide-react';
+import { Plus, Search, FileText, CheckCircle, Edit2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -20,9 +20,11 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { prontuariosService } from '@/services/prontuarios.service';
+import { excelService } from '@/services/excel.service';
 import { pacientesService } from '@/services/pacientes.service';
 import { medicosService } from '@/services/medicos.service';
 import { useAuthStore } from '@/stores/auth.store';
+import { useRole } from '@/hooks/useRole';
 import { formatDate } from '@/lib/utils';
 import type { Prontuario } from '@/types/prontuario';
 
@@ -163,6 +165,7 @@ export default function ProntuariosPage() {
   const [search, setSearch] = useState('');
   const [dialog, setDialog] = useState<{ open: boolean; prontuario?: Prontuario }>({ open: false });
   const user = useAuthStore(s => s.user);
+  const { isGestor } = useRole();
 
   const { data: prontuarios = [], isLoading } = useQuery({
     queryKey: ['prontuarios'],
@@ -188,9 +191,18 @@ export default function ProntuariosPage() {
       <PageHeader
         title="Prontuários"
         subtitle={`${prontuarios.length} registros`}
-        actions={user?.perfil === 'medico' && (
-          <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Novo Prontuário</GradientButton>
-        )}
+        actions={
+          <>
+            {isGestor && (
+              <GradientButton variant="outline" onClick={() => excelService.export('prontuarios')}>
+                <Download className="w-4 h-4" /> Exportar
+              </GradientButton>
+            )}
+            {user?.perfil === 'medico' && (
+              <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Novo Prontuário</GradientButton>
+            )}
+          </>
+        }
       />
 
       <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-2 mb-6 max-w-md">
@@ -234,7 +246,7 @@ export default function ProntuariosPage() {
         )}
       </Card>
 
-      <ProntuarioDialog open={dialog.open} prontuario={dialog.prontuario} onClose={() => setDialog({ open: false })} />
+      <ProntuarioDialog key={dialog.prontuario?.id ?? 'new'} open={dialog.open} prontuario={dialog.prontuario} onClose={() => setDialog({ open: false })} />
     </AppLayout>
   );
 }

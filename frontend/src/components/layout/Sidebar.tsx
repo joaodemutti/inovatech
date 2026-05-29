@@ -46,7 +46,7 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: collapsed ? 72 : 260 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="relative flex flex-col h-screen shrink-0 overflow-hidden"
+      className="relative flex flex-col h-screen shrink-0"
       style={{
         background: 'linear-gradient(180deg, #1e1b4b 0%, #312e81 40%, #1e3a8a 100%)',
         boxShadow: '4px 0 24px rgba(0,0,0,0.2)',
@@ -126,7 +126,7 @@ export function Sidebar() {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full flex items-center justify-center bg-indigo-600 border border-indigo-400 text-white hover:bg-indigo-500 transition-colors z-10 shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full flex items-center justify-center bg-indigo-600 border border-indigo-400 text-white hover:bg-indigo-500 transition-colors z-50 shadow-lg"
       >
         {collapsed ? (
           <ChevronRight className="w-3 h-3" />

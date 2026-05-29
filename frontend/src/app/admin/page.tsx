@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usuariosService } from '@/services/usuarios.service';
+import { useRole } from '@/hooks/useRole';
 import { adminService } from '@/services/admin.service';
 import { formatDateTime } from '@/lib/utils';
 import type { Usuario } from '@/types/usuario';
@@ -123,7 +124,22 @@ function UsuarioDialog({ usuario, open, onClose }: { usuario?: Usuario; open: bo
 }
 
 export default function AdminPage() {
+  const { isGestor } = useRole();
   const [dialog, setDialog] = useState<{ open: boolean; usuario?: Usuario }>({ open: false });
+
+  if (!isGestor) {
+    return (
+      <AppLayout title="Administração">
+        <div className="flex flex-col items-center justify-center py-32 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
+            <Shield className="w-8 h-8 text-red-400" />
+          </div>
+          <h3 className="text-slate-700 font-semibold text-lg">Acesso Restrito</h3>
+          <p className="text-slate-400 text-sm mt-1">Esta área é exclusiva para gestores.</p>
+        </div>
+      </AppLayout>
+    );
+  }
   const [modulo, setModulo] = useState('');
   const [resultado, setResultado] = useState('');
 
@@ -225,7 +241,7 @@ export default function AdminPage() {
         </TabsContent>
       </Tabs>
 
-      <UsuarioDialog open={dialog.open} usuario={dialog.usuario} onClose={() => setDialog({ open: false })} />
+      <UsuarioDialog key={dialog.usuario?.id ?? 'new'} open={dialog.open} usuario={dialog.usuario} onClose={() => setDialog({ open: false })} />
     </AppLayout>
   );
 }
