@@ -63,4 +63,4 @@ app.include_router(dashboard.router)
 
 @app.get("/", tags=["Health"])
 def root():
-    return {"status": "ok", "app": "INOVATECH API", "version": "1.0.0"}
+    return {"status": "ok", "app": "INOVATECH API", "version": "1.0.0","front":settings.frontend_url}

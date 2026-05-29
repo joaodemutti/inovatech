@@ -26,7 +26,7 @@ def login(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
         max_age=60 * settings.access_token_expire_minutes,
     )
