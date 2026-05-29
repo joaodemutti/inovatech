@@ -209,10 +209,45 @@ def seed(db: Session):
     print(f"  Login paciente:      joao   / {SENHA_PADRAO}")
 
 
+USUARIOS_ESSENCIAIS = [
+    {"nome": "Roberto Admin",   "perfil": "gestor",         "login": "roberto", "email": "roberto@clinica.com"},
+    {"nome": "Ana Lima",        "perfil": "recepcionista",  "login": "ana",     "email": "ana@clinica.com"},
+    {"nome": "Dr. Carlos Lima", "perfil": "medico",         "login": "carlos",  "email": "carlos@clinica.com"},
+    {"nome": "Dra. Renata Souza","perfil": "medico",        "login": "renata",  "email": "renata@clinica.com"},
+    {"nome": "Dr. Marcos Teles","perfil": "medico",         "login": "marcos",  "email": "marcos@clinica.com"},
+    {"nome": "Maria Oliveira",  "perfil": "paciente",       "login": "maria",   "email": "maria@email.com"},
+    {"nome": "João Silva",      "perfil": "paciente",       "login": "joao",    "email": "joao@email.com"},
+]
+
+
+def seed_usuarios(db: Session):
+    """Garante que os usuários essenciais existam — seguro para rodar em todo deploy."""
+    criados = 0
+    for u in USUARIOS_ESSENCIAIS:
+        if not db.query(Usuario).filter(Usuario.login == u["login"]).first():
+            db.add(Usuario(
+                **u,
+                password_hash=criar_hash_senha(SENHA_PADRAO),
+                status="ativo",
+                created_at=datetime.utcnow(),
+            ))
+            criados += 1
+    if criados:
+        db.commit()
+        print(f"  {criados} usuário(s) essencial(is) criado(s)")
+    else:
+        print("  Usuários essenciais já existem — nenhuma alteração")
+
+
 if __name__ == "__main__":
     db = SessionLocal()
     try:
-        seed(db)
+        if db.query(Usuario).first():
+            print("ℹ Banco já populado — garantindo usuários essenciais...")
+            seed_usuarios(db)
+        else:
+            print("ℹ Banco vazio — executando seed completo...")
+            seed(db)
     except Exception as e:
         db.rollback()
         print(f"✗ Erro durante seed: {e}")
