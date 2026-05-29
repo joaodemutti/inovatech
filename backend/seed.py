@@ -44,7 +44,12 @@ def seed(db: Session):
         {"nome": "João Silva", "perfil": "paciente", "login": "joao", "email": "joao@email.com"},
     ]
     usuarios = []
+    criados = 0
     for u in usuarios_dados:
+        existe = db.query(Usuario).filter(Usuario.login == u["login"]).first()
+        if existe:
+            usuarios.append(existe)
+            continue
         usuario = Usuario(
             **u,
             password_hash=criar_hash_senha(SENHA_PADRAO),
@@ -52,9 +57,10 @@ def seed(db: Session):
             created_at=datetime.utcnow(),
         )
         db.add(usuario)
+        db.flush()
         usuarios.append(usuario)
-    db.flush()
-    print(f"  {len(usuarios)} usuários criados")
+        criados += 1
+    print(f"  {criados} usuários criados ({len(usuarios) - criados} já existiam)")
 
     # ── Pacientes ─────────────────────────────────────────────────────────
     pacientes_dados = [
@@ -206,10 +212,7 @@ def seed(db: Session):
 if __name__ == "__main__":
     db = SessionLocal()
     try:
-        if db.query(Usuario).first():
-            print("ℹ Banco já populado — seed ignorado.")
-        else:
-            seed(db)
+        seed(db)
     except Exception as e:
         db.rollback()
         print(f"✗ Erro durante seed: {e}")
