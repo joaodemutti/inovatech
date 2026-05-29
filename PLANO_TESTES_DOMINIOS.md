@@ -203,18 +203,6 @@ O plano de testes sera considerado satisfatorio quando:
 
 ---
 
-## Possiveis Pendencias Identificadas
-
-| Funcionalidade | Possivel pendencia |
-|---|---|
-| Permissoes por perfil | Algumas telas ou rotas podem permitir acesso indevido |
-| Importacao de Excel | A importacao pode validar dados, mas nao salvar corretamente |
-| Laudo em PDF | O sistema pode ainda nao gerar arquivo PDF real |
-| Auditoria | Algumas acoes podem nao gerar log |
-| Interface | Algumas funcionalidades podem existir no backend, mas nao estar completas no frontend |
-
----
-
 ## Conclusao
 
 Este cronograma organiza os testes do INOVATECH de forma progressiva: primeiro validando regras pequenas, depois a integracao entre modulos e, por fim, os fluxos completos do usuario.
