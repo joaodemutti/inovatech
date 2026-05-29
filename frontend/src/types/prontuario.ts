@@ -15,7 +15,7 @@ export interface Prontuario {
 
 export interface ProntuarioCreate {
   paciente_id: number;
-  medico_id: number;
+  medico_id?: number;
   data: string;
   cid: string;
   diagnostico: string;

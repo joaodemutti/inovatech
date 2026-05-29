@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import require_role
 from app.models.consulta import Consulta
 from app.models.lancamento_financeiro import LancamentoFinanceiro
 from app.models.paciente import Paciente
@@ -36,7 +36,7 @@ class IndicadoresDashboard(BaseModel):
 @router.get("/indicadores", response_model=IndicadoresDashboard)
 def indicadores(
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista", "medico")),
 ):
     total_pacientes = db.query(func.count(Paciente.id)).scalar() or 0
 

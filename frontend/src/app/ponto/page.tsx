@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Clock, Download, Plus, X } from 'lucide-react';
+import { Clock, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -20,9 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { pontoService } from '@/services/ponto.service';
 import { usuariosService } from '@/services/usuarios.service';
-import { excelService } from '@/services/excel.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { useRole } from '@/hooks/useRole';
 import { formatDate } from '@/lib/utils';
@@ -37,7 +37,8 @@ type FormData = z.infer<typeof schema>;
 
 export default function PontoPage() {
   const user = useAuthStore(s => s.user);
-  const { isGestor } = useRole();
+  const { can, isGestor } = useRole();
+  const canUsePonto = can('gestor', 'recepcionista', 'medico');
   const [open, setOpen] = useState(false);
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
@@ -46,11 +47,13 @@ export default function PontoPage() {
   const { data: totais } = useQuery({
     queryKey: ['ponto-totais', dataInicio, dataFim],
     queryFn: () => pontoService.totais({ data_inicio: dataInicio || undefined, data_fim: dataFim || undefined }).then(r => r.data),
+    enabled: canUsePonto,
   });
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ['ponto-registros', dataInicio, dataFim],
     queryFn: () => pontoService.list({ data_inicio: dataInicio || undefined, data_fim: dataFim || undefined, limit: 100 }).then(r => r.data),
+    enabled: canUsePonto,
   });
 
   const { data: usuarios = [] } = useQuery({
@@ -71,17 +74,26 @@ export default function PontoPage() {
   });
 
   function onSubmit(data: FormData) {
-    createMutation.mutate({ ...data, entrada: data.entrada || undefined, saida: data.saida || undefined });
+    if (!user) return;
+    createMutation.mutate({
+      ...data,
+      usuario_id: isGestor ? data.usuario_id : user.id,
+      entrada: data.entrada || undefined,
+      saida: data.saida || undefined,
+    });
   }
 
   return (
-    <AppLayout title="Ponto" subtitle="Controle de jornada">
+    <AppLayout title="Ponto" subtitle="Controle de jornada" allowedRoles={['gestor', 'recepcionista', 'medico']}>
       <PageHeader
         title="Controle de Ponto"
         subtitle="Registros de jornada de trabalho"
         actions={
           <>
-            {isGestor && <GradientButton variant="outline" onClick={() => excelService.export('ponto')}><Download className="w-4 h-4" /> Exportar</GradientButton>}
+            {isGestor && <ExcelActions module="ponto" onImported={() => {
+              qc.invalidateQueries({ queryKey: ['ponto-registros'] });
+              qc.invalidateQueries({ queryKey: ['ponto-totais'] });
+            }} />}
             <GradientButton onClick={() => setOpen(true)}><Plus className="w-4 h-4" /> Registrar</GradientButton>
           </>
         }

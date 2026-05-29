@@ -11,7 +11,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Plus, Calendar, Download } from 'lucide-react';
+import { Plus, Calendar, CheckCircle2, PlayCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -22,8 +22,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { consultasService } from '@/services/consultas.service';
-import { excelService } from '@/services/excel.service';
 import { useRole } from '@/hooks/useRole';
 import { pacientesService } from '@/services/pacientes.service';
 import { medicosService } from '@/services/medicos.service';
@@ -51,8 +51,8 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
   const canWrite = can('gestor', 'recepcionista');
   const isEdit = !!consulta;
 
-  const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data) });
-  const { data: medicos = [] } = useQuery({ queryKey: ['medicos'], queryFn: () => medicosService.list().then(r => r.data) });
+  const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data), enabled: canWrite });
+  const { data: medicos = [] } = useQuery({ queryKey: ['medicos'], queryFn: () => medicosService.list().then(r => r.data), enabled: canWrite });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
@@ -72,12 +72,13 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['consultas'] }); toast.success('Atualizado!'); onClose(); },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: () => consultasService.remove(consulta!.id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['consultas'] }); toast.success('Removido'); onClose(); },
+  const statusMutation = useMutation({
+    mutationFn: (status: ConsultaStatus) => consultasService.update(consulta!.id, { status }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['consultas'] }); toast.success('Status atualizado!'); onClose(); },
+    onError: (e: unknown) => toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Erro'),
   });
 
-  const loading = createMutation.isPending || updateMutation.isPending;
+  const loading = createMutation.isPending || updateMutation.isPending || statusMutation.isPending;
 
   function onSubmit(data: FormData) {
     const clean = { ...data, convenio: data.convenio || undefined };
@@ -101,10 +102,19 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+          {!canWrite && consulta ? (
+            <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+              <div><span className="text-slate-400">Paciente</span><p className="font-medium text-slate-700">#{consulta.paciente_id}</p></div>
+              <div><span className="text-slate-400">Medico</span><p className="font-medium text-slate-700">#{consulta.medico_id}</p></div>
+              <div><span className="text-slate-400">Data</span><p className="font-medium text-slate-700">{consulta.data}</p></div>
+              <div><span className="text-slate-400">Horario</span><p className="font-medium text-slate-700">{consulta.horario?.substring(0, 5)}</p></div>
+              <div className="col-span-2"><span className="text-slate-400">Tipo</span><p className="font-medium text-slate-700">{consulta.tipo_consulta}</p></div>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1.5">
               <Label>Paciente <span className="text-red-500">*</span></Label>
-              <select {...register('paciente_id')} className={`h-9 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 ${errors.paciente_id ? 'border-red-300' : 'border-slate-200'}`}>
+              <select {...register('paciente_id')} disabled={!canWrite} className={`h-9 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 ${errors.paciente_id ? 'border-red-300' : 'border-slate-200'}`}>
                 <option value="">Selecione...</option>
                 {pacientes.filter(p => p.status === 'ativo').map(p => <option key={p.id} value={p.id}>{p.nome_completo}</option>)}
               </select>
@@ -112,41 +122,50 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Médico <span className="text-red-500">*</span></Label>
-              <select {...register('medico_id')} className={`h-9 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 ${errors.medico_id ? 'border-red-300' : 'border-slate-200'}`}>
+              <select {...register('medico_id')} disabled={!canWrite} className={`h-9 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 ${errors.medico_id ? 'border-red-300' : 'border-slate-200'}`}>
                 <option value="">Selecione...</option>
                 {medicos.filter(m => m.status === 'ativo').map(m => <option key={m.id} value={m.id}>Dr(a). {m.nome_completo} — {m.especialidade}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label>Data <span className="text-red-500">*</span></Label>
-              <Input type="date" {...register('data')} />
+              <Input type="date" {...register('data')} disabled={!canWrite} />
             </div>
             <div className="space-y-1.5">
               <Label>Horário <span className="text-red-500">*</span></Label>
-              <Input type="time" {...register('horario')} />
+              <Input type="time" {...register('horario')} disabled={!canWrite} />
             </div>
             <div className="space-y-1.5">
               <Label>Tipo <span className="text-red-500">*</span></Label>
-              <Input {...register('tipo_consulta')} placeholder="Consulta, Retorno..." />
+              <Input {...register('tipo_consulta')} placeholder="Consulta, Retorno..." disabled={!canWrite} />
             </div>
             <div className="space-y-1.5">
               <Label>Valor (R$) <span className="text-red-500">*</span></Label>
-              <Input type="number" step="0.01" {...register('valor')} />
+              <Input type="number" step="0.01" {...register('valor')} disabled={!canWrite} />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Convênio</Label>
-              <Input {...register('convenio')} placeholder="Particular, Unimed..." />
+              <Input {...register('convenio')} placeholder="Particular, Unimed..." disabled={!canWrite} />
             </div>
           </div>
+          )}
 
           <DialogFooter className="gap-2">
             {isEdit && canWrite && (
-              <Button type="button" variant="destructive" size="sm" onClick={() => deleteMutation.mutate()}>
-                Cancelar Consulta
-              </Button>
+              <div className="flex flex-wrap gap-2 mr-auto">
+                <Button type="button" variant="outline" size="sm" onClick={() => statusMutation.mutate('confirmada')}>
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirmar
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => statusMutation.mutate('realizada')}>
+                  <PlayCircle className="w-3.5 h-3.5 mr-1" /> Realizada
+                </Button>
+                <Button type="button" variant="destructive" size="sm" onClick={() => statusMutation.mutate('cancelada')}>
+                  <XCircle className="w-3.5 h-3.5 mr-1" /> Cancelar
+                </Button>
+              </div>
             )}
             <Button type="button" variant="outline" onClick={onClose}>Fechar</Button>
-            <GradientButton type="submit" loading={loading}>{isEdit ? 'Salvar' : 'Agendar'}</GradientButton>
+            {canWrite && <GradientButton type="submit" loading={loading}>{isEdit ? 'Salvar' : 'Agendar'}</GradientButton>}
           </DialogFooter>
         </form>
       </DialogContent>
@@ -155,13 +174,16 @@ function ConsultaDialog({ consulta, defaultDate, open, onClose }: { consulta?: C
 }
 
 export default function ConsultasPage() {
+  const qc = useQueryClient();
   const { isGestor, can } = useRole();
+  const canRead = can('gestor', 'recepcionista', 'medico');
   const canWrite = can('gestor', 'recepcionista');
   const [dialog, setDialog] = useState<{ open: boolean; consulta?: Consulta; defaultDate?: string }>({ open: false });
 
   const { data: consultas = [] } = useQuery({
     queryKey: ['consultas'],
     queryFn: () => consultasService.list({ limit: 500 }).then(r => r.data),
+    enabled: canRead,
   });
 
   const events = consultas.map(c => ({
@@ -174,16 +196,14 @@ export default function ConsultasPage() {
   }));
 
   return (
-    <AppLayout title="Consultas" subtitle="Agenda médica">
+    <AppLayout title="Consultas" subtitle="Agenda médica" allowedRoles={['gestor', 'recepcionista', 'medico']}>
       <PageHeader
         title="Agenda de Consultas"
         subtitle="Gerencie todos os agendamentos"
         actions={
           <>
             {isGestor && (
-              <GradientButton variant="outline" onClick={() => excelService.export('consultas')}>
-                <Download className="w-4 h-4" /> Exportar
-              </GradientButton>
+              <ExcelActions module="consultas" onImported={() => qc.invalidateQueries({ queryKey: ['consultas'] })} />
             )}
             {canWrite && (
               <GradientButton onClick={() => setDialog({ open: true })}>
@@ -220,7 +240,7 @@ export default function ConsultasPage() {
             locale={ptBrLocale}
             headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
             events={events}
-            dateClick={(info) => setDialog({ open: true, defaultDate: info.dateStr })}
+            dateClick={(info) => canWrite && setDialog({ open: true, defaultDate: info.dateStr })}
             eventClick={(info) => setDialog({ open: true, consulta: info.event.extendedProps.consulta as Consulta })}
             height="auto"
             aspectRatio={1.8}

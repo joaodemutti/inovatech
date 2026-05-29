@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { dashboardService } from '@/services/dashboard.service';
 import { consultasService } from '@/services/consultas.service';
 import { pacientesService } from '@/services/pacientes.service';
+import { useRole } from '@/hooks/useRole';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 const mockChart = [
@@ -24,25 +25,31 @@ const mockChart = [
 ];
 
 export default function DashboardPage() {
+  const { can } = useRole();
+  const canDashboard = can('gestor', 'recepcionista', 'medico');
+  const canReadPacientes = can('gestor', 'recepcionista');
   const { data: indicadores, isLoading: loadingIndicadores } = useQuery({
     queryKey: ['dashboard-indicadores'],
     queryFn: () => dashboardService.indicadores().then((r) => r.data),
+    enabled: canDashboard,
   });
 
   const { data: consultasHoje = [], isLoading: loadingConsultas } = useQuery({
     queryKey: ['consultas-hoje'],
     queryFn: () => consultasService.hoje().then((r) => r.data),
+    enabled: canDashboard,
   });
 
   const { data: pacientes = [], isLoading: loadingPacientes } = useQuery({
     queryKey: ['pacientes'],
     queryFn: () => pacientesService.list().then((r) => r.data),
+    enabled: canReadPacientes,
   });
 
   const recentePacientes = pacientes.slice(0, 5);
 
   return (
-    <AppLayout title="Dashboard" subtitle="Visão geral da clínica">
+    <AppLayout title="Dashboard" subtitle="Visão geral da clínica" allowedRoles={['gestor', 'recepcionista', 'medico']}>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <StatCard

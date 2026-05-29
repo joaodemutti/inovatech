@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Search, Download, Stethoscope, Edit2 } from 'lucide-react';
+import { Plus, Search, Stethoscope, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -21,8 +21,8 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { medicosService } from '@/services/medicos.service';
-import { excelService } from '@/services/excel.service';
 import { useRole } from '@/hooks/useRole';
 import { formatCPF } from '@/lib/utils';
 import type { Medico } from '@/types/medico';
@@ -126,13 +126,17 @@ function MedicoDialog({ medico, open, onClose }: { medico?: Medico; open: boolea
 }
 
 export default function MedicosPage() {
-  const { isGestor } = useRole();
+  const qc = useQueryClient();
+  const { can, isGestor, isRecepcionista } = useRole();
+  const canRead = can('gestor', 'recepcionista');
+  const canWrite = isGestor || isRecepcionista;
   const [search, setSearch] = useState('');
   const [dialog, setDialog] = useState<{ open: boolean; medico?: Medico }>({ open: false });
 
   const { data: medicos = [], isLoading } = useQuery({
     queryKey: ['medicos'],
     queryFn: () => medicosService.list().then((r) => r.data),
+    enabled: canRead,
   });
 
   const filtered = useMemo(() =>
@@ -141,18 +145,14 @@ export default function MedicosPage() {
   );
 
   return (
-    <AppLayout title="Médicos" subtitle="Gerenciamento de médicos">
+    <AppLayout title="Médicos" subtitle="Gerenciamento de médicos" allowedRoles={['gestor', 'recepcionista']}>
       <PageHeader
         title="Médicos"
         subtitle={`${medicos.length} médicos cadastrados`}
         actions={
           <>
-            {isGestor && (
-              <>
-                <GradientButton variant="outline" onClick={() => excelService.export('medicos')}><Download className="w-4 h-4" /> Exportar</GradientButton>
-                <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Novo Médico</GradientButton>
-              </>
-            )}
+            {isGestor && <ExcelActions module="medicos" onImported={() => qc.invalidateQueries({ queryKey: ['medicos'] })} />}
+            {canWrite && <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Novo Médico</GradientButton>}
           </>
         }
       />
@@ -167,13 +167,13 @@ export default function MedicosPage() {
           <div className="p-6 space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}</div>
         ) : filtered.length === 0 ? (
           <EmptyState icon={Stethoscope} title="Nenhum médico encontrado"
-            action={isGestor ? <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Cadastrar</GradientButton> : undefined}
+            action={canWrite ? <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Cadastrar</GradientButton> : undefined}
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                {['Nome', 'CRM', 'Especialidade', 'CPF', 'Telefone', 'Status', ...(isGestor ? [''] : [])].map(h => <TableHead key={h}>{h}</TableHead>)}
+                {['Nome', 'CRM', 'Especialidade', 'CPF', 'Telefone', 'Status', ...(canWrite ? [''] : [])].map(h => <TableHead key={h}>{h}</TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -190,7 +190,7 @@ export default function MedicosPage() {
                   <TableCell className="text-slate-500">{formatCPF(m.cpf)}</TableCell>
                   <TableCell className="text-slate-500">{m.telefone ?? '—'}</TableCell>
                   <TableCell><StatusBadge status={m.status} /></TableCell>
-                  {isGestor && (
+                  {canWrite && (
                     <TableCell>
                       <Button size="icon" variant="ghost" className="h-8 w-8 text-purple-600 hover:bg-purple-50 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDialog({ open: true, medico: m })}>
                         <Edit2 className="w-3.5 h-3.5" />
@@ -204,7 +204,7 @@ export default function MedicosPage() {
         )}
       </Card>
 
-      {isGestor && (
+      {canWrite && (
         <MedicoDialog key={dialog.medico?.id ?? 'new'} open={dialog.open} medico={dialog.medico} onClose={() => setDialog({ open: false })} />
       )}
     </AppLayout>

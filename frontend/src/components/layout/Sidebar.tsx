@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['gestor', 'recepcionista', 'medico'] },
-  { href: '/pacientes', label: 'Pacientes', icon: Users, roles: ['gestor', 'recepcionista', 'medico'] },
+  { href: '/pacientes', label: 'Pacientes', icon: Users, roles: ['gestor', 'recepcionista'] },
   { href: '/medicos', label: 'Médicos', icon: Stethoscope, roles: ['gestor', 'recepcionista'] },
   { href: '/consultas', label: 'Consultas', icon: Calendar, roles: ['gestor', 'recepcionista', 'medico'] },
   { href: '/prontuarios', label: 'Prontuários', icon: FileText, roles: ['gestor', 'medico'] },

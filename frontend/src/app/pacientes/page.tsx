@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Search, Download, UserPlus, Users, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, UserPlus, Users, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -20,8 +20,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { pacientesService } from '@/services/pacientes.service';
-import { excelService } from '@/services/excel.service';
 import { useRole } from '@/hooks/useRole';
 import { formatCPF, formatDate } from '@/lib/utils';
 import type { Paciente } from '@/types/paciente';
@@ -143,6 +143,7 @@ export default function PacientesPage() {
   const { data: pacientes = [], isLoading } = useQuery({
     queryKey: ['pacientes'],
     queryFn: () => pacientesService.list().then((r) => r.data),
+    enabled: canWrite,
   });
 
   const deleteMutation = useMutation({
@@ -160,16 +161,14 @@ export default function PacientesPage() {
   );
 
   return (
-    <AppLayout title="Pacientes" subtitle="Gerenciamento de pacientes">
+    <AppLayout title="Pacientes" subtitle="Gerenciamento de pacientes" allowedRoles={['gestor', 'recepcionista']}>
       <PageHeader
         title="Pacientes"
         subtitle={`${pacientes.length} pacientes cadastrados`}
         actions={
           <>
             {isGestor && (
-              <GradientButton variant="outline" onClick={() => excelService.export('pacientes')}>
-                <Download className="w-4 h-4" /> Exportar
-              </GradientButton>
+              <ExcelActions module="pacientes" onImported={() => qc.invalidateQueries({ queryKey: ['pacientes'] })} />
             )}
             {canWrite && (
               <GradientButton onClick={() => setDialog({ open: true })}>

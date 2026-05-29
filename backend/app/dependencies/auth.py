@@ -31,6 +31,22 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    request: Request, db: Session = Depends(get_db)
+) -> Usuario | None:
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+    try:
+        payload = decodificar_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+        return db.get(Usuario, int(user_id))
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, ValueError):
+        return None
+
+
 def require_role(*perfis: str):
     def dependency(current_user: Usuario = Depends(get_current_user)):
         if current_user.perfil not in perfis:

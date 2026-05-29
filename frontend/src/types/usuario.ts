@@ -19,6 +19,7 @@ export interface UsuarioCreate {
   login: string;
   email: string;
   password: string;
+  status?: UserStatus;
   modulos_permitidos?: string[];
   observacao?: string;
 }

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import require_role
 from app.models.usuario import Usuario
 from app.repositories import prontuario_repository
 from app.schemas.prontuario import ProntuarioCreate, ProntuarioResponse, ProntuarioUpdate
@@ -26,10 +26,10 @@ def criar(
     payload: ProntuarioCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(require_role("medico")),
+    current_user: Usuario = Depends(require_role("gestor", "medico")),
 ):
     ip = request.client.host if request.client else None
-    return prontuario_service.criar_prontuario(db, payload.model_dump(), current_user.id, ip)
+    return prontuario_service.criar_prontuario(db, payload.model_dump(), current_user, ip)
 
 
 @router.get("/paciente/{paciente_id}", response_model=list[ProntuarioResponse])
@@ -56,7 +56,7 @@ def atualizar(
     payload: ProntuarioUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(require_role("medico")),
+    current_user: Usuario = Depends(require_role("gestor", "medico")),
 ):
     ip = request.client.host if request.client else None
     return prontuario_service.atualizar_prontuario(
@@ -69,7 +69,7 @@ def liberar_laudo(
     prontuario_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(require_role("medico")),
+    current_user: Usuario = Depends(require_role("gestor", "medico")),
 ):
     ip = request.client.host if request.client else None
     return prontuario_service.liberar_laudo(db, prontuario_id, current_user.id, ip)

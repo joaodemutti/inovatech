@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -46,15 +47,18 @@ def meus_laudos(
 def download_laudo(
     prontuario_id: int,
     db: Session = Depends(get_db),
-    _: Usuario = Depends(require_role("paciente")),
+    current_user: Usuario = Depends(require_role("paciente")),
 ):
-    # RN02: bloqueia se laudo não estiver liberado
-    prontuario = prontuario_service.verificar_laudo_liberado(db, prontuario_id)
-    return {
-        "id": prontuario.id,
-        "cid": prontuario.cid,
-        "diagnostico": prontuario.diagnostico,
-        "prescricao": prontuario.prescricao,
-        "data": prontuario.data,
-        "laudo_liberado": prontuario.laudo_liberado,
-    }
+    paciente = _get_paciente_do_usuario(db, current_user)
+    prontuario = prontuario_service.buscar_prontuario(db, prontuario_id)
+    if prontuario.paciente_id != paciente.id:
+        raise HTTPException(status_code=404, detail="Prontuário não encontrado")
+    if not prontuario.laudo_liberado:
+        raise HTTPException(status_code=403, detail="Laudo não liberado pelo médico responsável")
+
+    arquivo = prontuario_service.gerar_pdf_laudo(prontuario)
+    return StreamingResponse(
+        arquivo,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=laudo-{prontuario.id}.pdf"},
+    )

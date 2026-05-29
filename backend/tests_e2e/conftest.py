@@ -49,29 +49,44 @@ def _authenticated_client(api_url: str, role: str):
 
 @pytest.fixture()
 def gestor_client(api_url: str, api_ready: None):
-    with _authenticated_client(api_url, "gestor") as client:
+    client = _authenticated_client(api_url, "gestor")
+    try:
         yield client
+    finally:
+        client.close()
 
 
 @pytest.fixture()
 def recepcionista_client(api_url: str, api_ready: None):
-    with _authenticated_client(api_url, "recepcionista") as client:
+    client = _authenticated_client(api_url, "recepcionista")
+    try:
         yield client
+    finally:
+        client.close()
 
 
 @pytest.fixture()
 def medico_client(api_url: str, api_ready: None):
-    with _authenticated_client(api_url, "medico") as client:
+    client = _authenticated_client(api_url, "medico")
+    try:
         yield client
+    finally:
+        client.close()
 
 
 @pytest.fixture()
 def paciente_client(api_url: str, api_ready: None):
-    with _authenticated_client(api_url, "paciente") as client:
+    client = _authenticated_client(api_url, "paciente")
+    try:
         yield client
+    finally:
+        client.close()
 
 
 @pytest.fixture()
 def paciente_joao_client(api_url: str, api_ready: None):
-    with _authenticated_client(api_url, "paciente_joao") as client:
+    client = _authenticated_client(api_url, "paciente_joao")
+    try:
         yield client
+    finally:
+        client.close()

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Search, FileText, CheckCircle, Edit2, Download } from 'lucide-react';
+import { Plus, Search, FileText, CheckCircle, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -19,8 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { prontuariosService } from '@/services/prontuarios.service';
-import { excelService } from '@/services/excel.service';
 import { pacientesService } from '@/services/pacientes.service';
 import { medicosService } from '@/services/medicos.service';
 import { useAuthStore } from '@/stores/auth.store';
@@ -30,7 +30,7 @@ import type { Prontuario } from '@/types/prontuario';
 
 const schema = z.object({
   paciente_id: z.coerce.number().min(1),
-  medico_id: z.coerce.number().min(1),
+  medico_id: z.coerce.number().optional(),
   data: z.string().min(1),
   cid: z.string().min(1, 'CID obrigatório'),
   diagnostico: z.string().min(5),
@@ -46,8 +46,8 @@ function ProntuarioDialog({ prontuario, open, onClose }: { prontuario?: Prontuar
   const isEdit = !!prontuario;
   const canEdit = user?.perfil === 'medico';
 
-  const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data) });
-  const { data: medicos = [] } = useQuery({ queryKey: ['medicos'], queryFn: () => medicosService.list().then(r => r.data) });
+  const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data), enabled: user?.perfil === 'gestor' });
+  const { data: medicos = [] } = useQuery({ queryKey: ['medicos'], queryFn: () => medicosService.list().then(r => r.data), enabled: user?.perfil === 'gestor' });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
@@ -59,6 +59,7 @@ function ProntuarioDialog({ prontuario, open, onClose }: { prontuario?: Prontuar
   const createMutation = useMutation({
     mutationFn: prontuariosService.create,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['prontuarios'] }); toast.success('Criado!'); onClose(); reset(); },
+    onError: (e: unknown) => toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Erro ao criar prontuário'),
   });
 
   const updateMutation = useMutation({
@@ -74,6 +75,10 @@ function ProntuarioDialog({ prontuario, open, onClose }: { prontuario?: Prontuar
   const loading = createMutation.isPending || updateMutation.isPending;
 
   function onSubmit(data: FormData) {
+    if (!isEdit && user?.perfil === 'gestor' && !data.medico_id) {
+      toast.error('Selecione um médico');
+      return;
+    }
     if (isEdit) updateMutation.mutate(data);
     else createMutation.mutate(data);
   }
@@ -101,13 +106,21 @@ function ProntuarioDialog({ prontuario, open, onClose }: { prontuario?: Prontuar
           <div className="grid grid-cols-2 gap-4">
             {!isEdit && (
               <>
-                <div className="space-y-1.5">
-                  <Label>Paciente <span className="text-red-500">*</span></Label>
-                  <select {...register('paciente_id')} className={`h-9 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 ${errors.paciente_id ? 'border-red-300' : 'border-slate-200'}`}>
-                    <option value="">Selecione...</option>
-                    {pacientes.filter(p => p.status === 'ativo').map(p => <option key={p.id} value={p.id}>{p.nome_completo}</option>)}
-                  </select>
-                </div>
+                {user?.perfil === 'gestor' ? (
+                  <div className="space-y-1.5">
+                    <Label>Paciente <span className="text-red-500">*</span></Label>
+                    <select {...register('paciente_id')} className={`h-9 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 ${errors.paciente_id ? 'border-red-300' : 'border-slate-200'}`}>
+                      <option value="">Selecione...</option>
+                      {pacientes.filter(p => p.status === 'ativo').map(p => <option key={p.id} value={p.id}>{p.nome_completo}</option>)}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>ID do Paciente <span className="text-red-500">*</span></Label>
+                    <Input type="number" {...register('paciente_id')} className={errors.paciente_id ? 'border-red-300' : ''} />
+                  </div>
+                )}
+                {user?.perfil === 'gestor' && (
                 <div className="space-y-1.5">
                   <Label>Médico <span className="text-red-500">*</span></Label>
                   <select {...register('medico_id')} className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400">
@@ -115,6 +128,7 @@ function ProntuarioDialog({ prontuario, open, onClose }: { prontuario?: Prontuar
                     {medicos.filter(m => m.status === 'ativo').map(m => <option key={m.id} value={m.id}>Dr(a). {m.nome_completo}</option>)}
                   </select>
                 </div>
+                )}
               </>
             )}
             <div className="space-y-1.5">
@@ -162,18 +176,21 @@ function ProntuarioDialog({ prontuario, open, onClose }: { prontuario?: Prontuar
 }
 
 export default function ProntuariosPage() {
+  const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [dialog, setDialog] = useState<{ open: boolean; prontuario?: Prontuario }>({ open: false });
   const user = useAuthStore(s => s.user);
-  const { isGestor } = useRole();
+  const { can, isGestor } = useRole();
+  const canRead = can('gestor', 'medico');
 
   const { data: prontuarios = [], isLoading } = useQuery({
     queryKey: ['prontuarios'],
     queryFn: () => prontuariosService.list().then(r => r.data),
+    enabled: canRead,
   });
 
-  const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data) });
-  const { data: medicos = [] } = useQuery({ queryKey: ['medicos'], queryFn: () => medicosService.list().then(r => r.data) });
+  const { data: pacientes = [] } = useQuery({ queryKey: ['pacientes'], queryFn: () => pacientesService.list().then(r => r.data), enabled: isGestor });
+  const { data: medicos = [] } = useQuery({ queryKey: ['medicos'], queryFn: () => medicosService.list().then(r => r.data), enabled: isGestor });
 
   const pacienteMap = useMemo(() => new Map(pacientes.map(p => [p.id, p.nome_completo])), [pacientes]);
   const medicoMap = useMemo(() => new Map(medicos.map(m => [m.id, m.nome_completo])), [medicos]);
@@ -181,22 +198,23 @@ export default function ProntuariosPage() {
   const filtered = useMemo(() =>
     prontuarios.filter(p => {
       const nome = pacienteMap.get(p.paciente_id) ?? '';
-      return !search || nome.toLowerCase().includes(search.toLowerCase()) || p.cid.toLowerCase().includes(search.toLowerCase());
+      return !search
+        || nome.toLowerCase().includes(search.toLowerCase())
+        || p.cid.toLowerCase().includes(search.toLowerCase())
+        || String(p.paciente_id).includes(search);
     }),
     [prontuarios, search, pacienteMap]
   );
 
   return (
-    <AppLayout title="Prontuários" subtitle="Histórico médico">
+    <AppLayout title="Prontuários" subtitle="Histórico médico" allowedRoles={['gestor', 'medico']}>
       <PageHeader
         title="Prontuários"
         subtitle={`${prontuarios.length} registros`}
         actions={
           <>
             {isGestor && (
-              <GradientButton variant="outline" onClick={() => excelService.export('prontuarios')}>
-                <Download className="w-4 h-4" /> Exportar
-              </GradientButton>
+              <ExcelActions module="prontuarios" onImported={() => qc.invalidateQueries({ queryKey: ['prontuarios'] })} />
             )}
             {user?.perfil === 'medico' && (
               <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Novo Prontuário</GradientButton>

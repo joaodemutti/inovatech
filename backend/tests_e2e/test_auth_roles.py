@@ -54,6 +54,7 @@ def test_recepcionista_is_limited_to_cadastro_and_agenda(
         recepcionista_client.post("/pacientes", json=paciente_payload("Recepcao E2E")),
         201,
     )
+    assert_status(recepcionista_client.get("/medicos"), 200)
     assert_status(recepcionista_client.get("/consultas"), 200)
 
     assert_status(recepcionista_client.get("/financeiro"), 403)
@@ -67,6 +68,7 @@ def test_medico_is_limited_to_agenda_and_prontuario(medico_client: httpx.Client)
     assert_status(medico_client.get("/prontuarios"), 200)
 
     assert_status(medico_client.get("/pacientes"), 403)
+    assert_status(medico_client.get("/medicos"), 403)
     assert_status(medico_client.get("/financeiro"), 403)
     assert_status(medico_client.get("/admin/log-auditoria"), 403)
 
@@ -79,4 +81,3 @@ def test_paciente_is_limited_to_portal(paciente_client: httpx.Client):
     assert_status(paciente_client.get("/consultas"), 403)
     assert_status(paciente_client.get("/pacientes"), 403)
     assert_status(paciente_client.get("/financeiro"), 403)
-

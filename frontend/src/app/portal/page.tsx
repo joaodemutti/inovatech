@@ -10,31 +10,40 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { GradientButton } from '@/components/ui/GradientButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { portalService } from '@/services/portal.service';
+import { useRole } from '@/hooks/useRole';
 import { formatDate } from '@/lib/utils';
 
 export default function PortalPage() {
+  const { isPaciente } = useRole();
   const { data: consultas = [], isLoading: loadingConsultas } = useQuery({
     queryKey: ['portal-consultas'],
     queryFn: () => portalService.consultas().then((r) => r.data),
+    enabled: isPaciente,
   });
 
   const { data: laudos = [], isLoading: loadingLaudos } = useQuery({
     queryKey: ['portal-laudos'],
     queryFn: () => portalService.laudos().then((r) => r.data),
+    enabled: isPaciente,
   });
 
   async function handleDownload(id: number) {
     try {
       const { data } = await portalService.downloadLaudo(id);
-      toast.success('Laudo obtido com sucesso');
-      console.log(data);
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laudo-${id}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success('Laudo baixado com sucesso');
     } catch {
       toast.error('Erro ao baixar laudo');
     }
   }
 
   return (
-    <AppLayout title="Portal" subtitle="Meu espaço">
+    <AppLayout title="Portal" subtitle="Meu espaço" allowedRoles={['paciente']}>
       <PageHeader title="Portal do Paciente" subtitle="Suas consultas e laudos médicos" />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

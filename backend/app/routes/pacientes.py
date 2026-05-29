@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import require_role
 from app.models.usuario import Usuario
 from app.repositories import paciente_repository
 from app.schemas.paciente import PacienteCreate, PacienteResponse, PacienteUpdate
@@ -29,7 +29,7 @@ def _to_response(p) -> dict:
 @router.get("", response_model=list[PacienteResponse])
 def listar(
     db: Session = Depends(get_db),
-    _: Usuario = Depends(require_role("gestor", "recepcionista", "medico")),
+    _: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     pacientes = paciente_repository.listar(db)
     return [_to_response(p) for p in pacientes]
@@ -69,7 +69,7 @@ def criar(
 def buscar(
     paciente_id: int,
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     p = paciente_repository.buscar_por_id(db, paciente_id)
     if not p:

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import require_role
 from app.models.usuario import Usuario
 from app.schemas.consulta import ConsultaCreate, ConsultaResponse, ConsultaUpdate
 from app.services import consulta_service
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/consultas", tags=["Consultas"])
 @router.get("/hoje", response_model=list[ConsultaResponse])
 def hoje(
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista", "medico")),
 ):
     return consulta_service.listar_consultas(db, data=date.today(), limit=1000)
 
@@ -28,7 +28,7 @@ def listar(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista", "medico")),
 ):
     return consulta_service.listar_consultas(
         db, data=data, medico_id=medico_id, status=status, skip=skip, limit=limit
@@ -40,7 +40,7 @@ def criar(
     payload: ConsultaCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     ip = request.client.host if request.client else None
     return consulta_service.criar_consulta(
@@ -52,7 +52,7 @@ def criar(
 def buscar(
     consulta_id: int,
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista", "medico")),
 ):
     return consulta_service.buscar_consulta(db, consulta_id)
 
@@ -63,7 +63,7 @@ def atualizar(
     payload: ConsultaUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     ip = request.client.host if request.client else None
     return consulta_service.atualizar_consulta(

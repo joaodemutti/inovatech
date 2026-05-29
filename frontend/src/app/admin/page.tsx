@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Shield, Users, Plus, Edit2 } from 'lucide-react';
+import { Download, Shield, Users, Plus, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -22,7 +22,9 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { usuariosService } from '@/services/usuarios.service';
+import { excelService } from '@/services/excel.service';
 import { useRole } from '@/hooks/useRole';
 import { adminService } from '@/services/admin.service';
 import { formatDateTime } from '@/lib/utils';
@@ -33,6 +35,9 @@ const schema = z.object({
   login: z.string().min(3),
   email: z.string().email(),
   perfil: z.enum(['gestor', 'recepcionista', 'medico', 'paciente']),
+  status: z.enum(['ativo', 'inativo']),
+  observacao: z.string().optional(),
+  modulos_permitidos: z.string().optional(),
   password: z.string().min(6).optional().or(z.literal('')),
 });
 
@@ -45,8 +50,16 @@ function UsuarioDialog({ usuario, open, onClose }: { usuario?: Usuario; open: bo
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: usuario
-      ? { nome: usuario.nome, login: usuario.login, email: usuario.email, perfil: usuario.perfil }
-      : { perfil: 'recepcionista' },
+      ? {
+          nome: usuario.nome,
+          login: usuario.login,
+          email: usuario.email,
+          perfil: usuario.perfil,
+          status: usuario.status,
+          observacao: usuario.observacao ?? '',
+          modulos_permitidos: (usuario.modulos_permitidos ?? []).join(', '),
+        }
+      : { perfil: 'recepcionista', status: 'ativo' },
   });
 
   const createMutation = useMutation({
@@ -56,17 +69,25 @@ function UsuarioDialog({ usuario, open, onClose }: { usuario?: Usuario; open: bo
   });
 
   const updateMutation = useMutation({
-    mutationFn: (d: FormData) => usuariosService.update(usuario!.id, { ...d, password: d.password || undefined }),
+    mutationFn: (d: Parameters<typeof usuariosService.update>[1]) => usuariosService.update(usuario!.id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['usuarios'] }); toast.success('Atualizado!'); onClose(); },
   });
 
   const loading = createMutation.isPending || updateMutation.isPending;
 
   function onSubmit(data: FormData) {
-    if (isEdit) updateMutation.mutate(data);
+    const payload = {
+      ...data,
+      password: data.password || undefined,
+      observacao: data.observacao || undefined,
+      modulos_permitidos: data.modulos_permitidos
+        ? data.modulos_permitidos.split(',').map((item) => item.trim()).filter(Boolean)
+        : undefined,
+    };
+    if (isEdit) updateMutation.mutate(payload);
     else {
       if (!data.password) { toast.error('Senha obrigatória'); return; }
-      createMutation.mutate(data as Parameters<typeof usuariosService.create>[0]);
+      createMutation.mutate(payload as Parameters<typeof usuariosService.create>[0]);
     }
   }
 
@@ -105,6 +126,21 @@ function UsuarioDialog({ usuario, open, onClose }: { usuario?: Usuario; open: bo
               <Label>Email <span className="text-red-500">*</span></Label>
               <Input type="email" {...register('email')} className={errors.email ? 'border-red-300' : ''} />
             </div>
+            <div className="space-y-1.5">
+              <Label>Status <span className="text-red-500">*</span></Label>
+              <select {...register('status')} className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-purple-400">
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Módulos Permitidos</Label>
+              <Input {...register('modulos_permitidos')} placeholder="agenda, cadastro..." />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label>Observação</Label>
+              <Input {...register('observacao')} />
+            </div>
             <div className="col-span-2 space-y-1.5">
               <Label>
                 Senha {!isEdit && <span className="text-red-500">*</span>}
@@ -126,36 +162,49 @@ function UsuarioDialog({ usuario, open, onClose }: { usuario?: Usuario; open: bo
 export default function AdminPage() {
   const { isGestor } = useRole();
   const [dialog, setDialog] = useState<{ open: boolean; usuario?: Usuario }>({ open: false });
+  const qc = useQueryClient();
 
-  if (!isGestor) {
-    return (
-      <AppLayout title="Administração">
-        <div className="flex flex-col items-center justify-center py-32 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
-            <Shield className="w-8 h-8 text-red-400" />
-          </div>
-          <h3 className="text-slate-700 font-semibold text-lg">Acesso Restrito</h3>
-          <p className="text-slate-400 text-sm mt-1">Esta área é exclusiva para gestores.</p>
-        </div>
-      </AppLayout>
-    );
-  }
   const [modulo, setModulo] = useState('');
   const [resultado, setResultado] = useState('');
 
   const { data: usuarios = [], isLoading: loadingU } = useQuery({
     queryKey: ['usuarios'],
     queryFn: () => usuariosService.list().then((r) => r.data),
+    enabled: isGestor,
   });
 
   const { data: logs = [], isLoading: loadingL } = useQuery({
     queryKey: ['logs', modulo, resultado],
     queryFn: () => adminService.logs({ modulo: modulo || undefined, resultado: resultado || undefined, limit: 100 }).then((r) => r.data),
+    enabled: isGestor,
+  });
+
+  const backupMutation = useMutation({
+    mutationFn: adminService.backup,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['logs'] });
+      toast.success('Backup registrado!');
+    },
+    onError: () => toast.error('Erro ao registrar backup'),
   });
 
   return (
-    <AppLayout title="Administração" subtitle="Usuários e auditoria">
-      <PageHeader title="Administração" subtitle="Gestão de usuários e logs do sistema" />
+    <AppLayout title="Administração" subtitle="Usuários e auditoria" allowedRoles={['gestor']}>
+      <PageHeader
+        title="Administração"
+        subtitle="Gestão de usuários e logs do sistema"
+        actions={
+          <>
+            <ExcelActions module="usuarios" onImported={() => qc.invalidateQueries({ queryKey: ['usuarios'] })} />
+            <GradientButton variant="outline" onClick={() => excelService.export('log-auditoria')}>
+              <Download className="w-4 h-4" /> Exportar Logs
+            </GradientButton>
+            <GradientButton onClick={() => backupMutation.mutate()} loading={backupMutation.isPending}>
+              <Shield className="w-4 h-4" /> Backup
+            </GradientButton>
+          </>
+        }
+      />
 
       <Tabs defaultValue="usuarios">
         <TabsList>

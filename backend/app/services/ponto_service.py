@@ -1,4 +1,4 @@
-from datetime import date, time as time_type
+from datetime import date, time as time_type, timedelta
 from decimal import Decimal
 
 from fastapi import HTTPException
@@ -10,26 +10,29 @@ from app.schemas.ponto import TotaisPonto
 from app.services import auditoria_service
 
 
-def _calcular_situacao(
+def calcular_dados_ponto(
     entrada: time_type | None,
     saida: time_type | None,
-    h_trabalhadas: Decimal,
     h_esperadas: Decimal,
-) -> tuple[Decimal, Decimal, str]:
-    # RN03: cálculo automático de situação
+) -> tuple[Decimal, Decimal, str] | None:
+    # RN03: cálculo automático de situação. Retorna None quando apenas entrada ou saída está presente.
+    if entrada and saida:
+        delta = (
+            timedelta(hours=saida.hour, minutes=saida.minute, seconds=saida.second)
+            - timedelta(hours=entrada.hour, minutes=entrada.minute, seconds=entrada.second)
+        )
+        h_trabalhadas = Decimal(str(delta.total_seconds() / 3600))
+        diferenca = h_trabalhadas - h_esperadas
+        if diferenca > Decimal("1.0"):
+            situacao = "h_extra"
+        elif diferenca < Decimal("0"):
+            situacao = "atraso"
+        else:
+            situacao = "normal"
+        return h_trabalhadas, diferenca, situacao
     if entrada is None and saida is None:
         return Decimal("0"), Decimal("0") - h_esperadas, "falta"
-
-    diferenca = h_trabalhadas - h_esperadas
-
-    if diferenca > Decimal("1.0"):
-        situacao = "h_extra"
-    elif diferenca < Decimal("0"):
-        situacao = "atraso"
-    else:
-        situacao = "normal"
-
-    return h_trabalhadas, diferenca, situacao
+    return None
 
 
 def listar_pontos(db: Session, **filtros) -> list[RegistroPonto]:
@@ -50,28 +53,9 @@ def criar_ponto(
     saida = dados.get("saida")
     h_esperadas = Decimal(str(dados.get("h_esperadas", 8.0)))
 
-    if entrada and saida:
-        h_trabalhadas = Decimal(
-            str(
-                (
-                    saida.hour * 3600
-                    + saida.minute * 60
-                    - entrada.hour * 3600
-                    - entrada.minute * 60
-                )
-                / 3600
-            )
-        )
-        h_trabalhadas, diferenca, situacao = _calcular_situacao(
-            entrada, saida, h_trabalhadas, h_esperadas
-        )
-        dados["h_trabalhadas"] = h_trabalhadas
-        dados["diferenca"] = diferenca
-        dados["situacao"] = situacao
-    elif entrada is None and saida is None:
-        dados["h_trabalhadas"] = Decimal("0")
-        dados["diferenca"] = Decimal("0") - h_esperadas
-        dados["situacao"] = "falta"
+    resultado = calcular_dados_ponto(entrada, saida, h_esperadas)
+    if resultado is not None:
+        dados["h_trabalhadas"], dados["diferenca"], dados["situacao"] = resultado
 
     ponto = ponto_repository.criar(db, dados)
     auditoria_service.registrar_acao(
@@ -81,7 +65,7 @@ def criar_ponto(
         resultado="sucesso",
         usuario_id=usuario_id,
         ip=ip,
-        detalhes=f"Registro de ponto criado: {ponto.id}",
+        detalhes=f"Registro de ponto criado: {ponto.id} (funcionario: {ponto.usuario_id})",
     )
     return ponto
 
@@ -99,28 +83,9 @@ def atualizar_ponto(
     saida = dados.get("saida", ponto.saida)
     h_esperadas = Decimal(str(dados.get("h_esperadas", ponto.h_esperadas) or 8.0))
 
-    if entrada and saida:
-        h_trabalhadas = Decimal(
-            str(
-                (
-                    saida.hour * 3600
-                    + saida.minute * 60
-                    - entrada.hour * 3600
-                    - entrada.minute * 60
-                )
-                / 3600
-            )
-        )
-        h_trabalhadas, diferenca, situacao = _calcular_situacao(
-            entrada, saida, h_trabalhadas, h_esperadas
-        )
-        dados["h_trabalhadas"] = h_trabalhadas
-        dados["diferenca"] = diferenca
-        dados["situacao"] = situacao
-    elif entrada is None and saida is None:
-        dados["h_trabalhadas"] = Decimal("0")
-        dados["diferenca"] = Decimal("0") - h_esperadas
-        dados["situacao"] = "falta"
+    resultado = calcular_dados_ponto(entrada, saida, h_esperadas)
+    if resultado is not None:
+        dados["h_trabalhadas"], dados["diferenca"], dados["situacao"] = resultado
 
     ponto = ponto_repository.atualizar(db, ponto, dados)
     auditoria_service.registrar_acao(
@@ -130,7 +95,7 @@ def atualizar_ponto(
         resultado="sucesso",
         usuario_id=usuario_id,
         ip=ip,
-        detalhes=f"Ponto {ponto_id} atualizado",
+        detalhes=f"Ponto {ponto_id} atualizado (funcionario: {ponto.usuario_id})",
     )
     return ponto
 

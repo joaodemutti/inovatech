@@ -23,6 +23,15 @@ def login(db: Session, login: str, password: str, ip: str | None = None) -> str:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
     if usuario.status == "inativo":
+        auditoria_service.registrar_acao(
+            db=db,
+            acao="login",
+            modulo="auth",
+            resultado="falha",
+            usuario_id=usuario.id,
+            ip=ip,
+            detalhes=f"Tentativa de login de usuario inativo: {usuario.login}",
+        )
         raise HTTPException(status_code=403, detail="Usuário inativo")
 
     token = criar_token({"sub": str(usuario.id), "perfil": usuario.perfil})

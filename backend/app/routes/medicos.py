@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import require_role
 from app.models.usuario import Usuario
 from app.repositories import medico_repository
 from app.schemas.medico import MedicoCreate, MedicoResponse, MedicoUpdate
@@ -29,7 +29,7 @@ def _to_response(m) -> dict:
 @router.get("", response_model=list[MedicoResponse])
 def listar(
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     medicos = medico_repository.listar(db)
     return [_to_response(m) for m in medicos]
@@ -40,7 +40,7 @@ def criar(
     payload: MedicoCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(require_role("gestor")),
+    current_user: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     if medico_repository.buscar_por_crm(db, payload.crm):
         raise HTTPException(status_code=409, detail="CRM já cadastrado")
@@ -71,7 +71,7 @@ def criar(
 def buscar(
     medico_id: int,
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    _: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     m = medico_repository.buscar_por_id(db, medico_id)
     if not m:
@@ -84,7 +84,7 @@ def atualizar(
     medico_id: int,
     payload: MedicoUpdate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(require_role("gestor")),
+    current_user: Usuario = Depends(require_role("gestor", "recepcionista")),
 ):
     m = medico_repository.buscar_por_id(db, medico_id)
     if not m:

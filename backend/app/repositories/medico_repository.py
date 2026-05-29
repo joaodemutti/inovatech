@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.medico import Medico
@@ -19,6 +20,16 @@ def buscar_por_crm(db: Session, crm: str) -> Medico | None:
 
 def buscar_por_cpf(db: Session, cpf: str) -> Pessoa | None:
     return db.query(Pessoa).filter(Pessoa.cpf == cpf).first()
+
+
+def buscar_por_email(db: Session, email: str) -> Medico | None:
+    return (
+        db.query(Medico)
+        .join(Pessoa)
+        .options(joinedload(Medico.pessoa))
+        .filter(func.lower(Pessoa.email) == email.lower())
+        .first()
+    )
 
 
 def listar(db: Session, skip: int = 0, limit: int = 100) -> list[Medico]:

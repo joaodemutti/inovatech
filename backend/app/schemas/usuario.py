@@ -10,6 +10,7 @@ class UsuarioCreate(BaseModel):
     login: str
     email: EmailStr
     password: str
+    status: Literal["ativo", "inativo"] = "ativo"
     modulos_permitidos: list[str] | None = None
     observacao: str | None = None
 

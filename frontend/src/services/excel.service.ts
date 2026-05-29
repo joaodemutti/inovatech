@@ -1,6 +1,6 @@
 import api from '@/lib/api';
 
-type ExportModule =
+export type ExportModule =
   | 'pacientes'
   | 'medicos'
   | 'consultas'
@@ -9,6 +9,8 @@ type ExportModule =
   | 'ponto'
   | 'usuarios'
   | 'log-auditoria';
+
+export type ImportModule = Exclude<ExportModule, 'log-auditoria'>;
 
 export const excelService = {
   export: async (module: ExportModule) => {
@@ -21,10 +23,10 @@ export const excelService = {
     URL.revokeObjectURL(url);
   },
 
-  import: (module: ExportModule, file: File) => {
+  import: (module: ImportModule, file: File) => {
     const form = new FormData();
-    form.append('file', file);
-    return api.post(`/excel/import/${module}`, form, {
+    form.append('arquivo', file);
+    return api.post<{ importados: number; erros: string[] }>(`/excel/import/${module}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

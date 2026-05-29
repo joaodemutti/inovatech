@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import criar_hash_senha
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import require_role
 from app.models.usuario import Usuario
 from app.repositories import usuario_repository
 from app.schemas.usuario import UsuarioCreate, UsuarioResponse, UsuarioUpdate

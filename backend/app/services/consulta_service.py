@@ -82,6 +82,15 @@ def atualizar_consulta(
                 data=consulta.data,
                 horario=consulta.horario,
             )
+            auditoria_service.registrar_acao(
+                db=db,
+                acao="notificar",
+                modulo="agenda",
+                resultado="sucesso",
+                usuario_id=usuario_id,
+                ip=ip,
+                detalhes=f"Lembrete WhatsApp registrado para consulta {consulta_id}",
+            )
 
     auditoria_service.registrar_acao(
         db=db,

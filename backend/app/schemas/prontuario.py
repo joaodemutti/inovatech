@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class ProntuarioCreate(BaseModel):
     paciente_id: int
-    medico_id: int
+    medico_id: int | None = None
     data: date
     cid: str
     diagnostico: str

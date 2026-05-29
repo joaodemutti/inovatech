@@ -7,7 +7,7 @@ import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Edit2 } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -20,10 +20,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ExcelActions } from '@/components/shared/ExcelActions';
 import { financeiroService } from '@/services/financeiro.service';
 import { useRole } from '@/hooks/useRole';
 import { pacientesService } from '@/services/pacientes.service';
-import { excelService } from '@/services/excel.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Lancamento, LancamentoStatus } from '@/types/financeiro';
 
@@ -132,24 +132,11 @@ export default function FinanceiroPage() {
   const { isGestor } = useRole();
   const [statusFilter, setStatusFilter] = useState('');
 
-  if (!isGestor) {
-    return (
-      <AppLayout title="Financeiro">
-        <div className="flex flex-col items-center justify-center py-32 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
-            <DollarSign className="w-8 h-8 text-red-400" />
-          </div>
-          <h3 className="text-slate-700 font-semibold text-lg">Acesso Restrito</h3>
-          <p className="text-slate-400 text-sm mt-1">Esta área é exclusiva para gestores.</p>
-        </div>
-      </AppLayout>
-    );
-  }
   const [dialog, setDialog] = useState<{ open: boolean; lancamento?: Lancamento }>({ open: false });
   const qc = useQueryClient();
 
-  const { data: indicadores } = useQuery({ queryKey: ['financeiro-indicadores'], queryFn: () => financeiroService.indicadores().then(r => r.data) });
-  const { data: lancamentos = [], isLoading } = useQuery({ queryKey: ['lancamentos'], queryFn: () => financeiroService.list(0, 200).then(r => r.data) });
+  const { data: indicadores } = useQuery({ queryKey: ['financeiro-indicadores'], queryFn: () => financeiroService.indicadores().then(r => r.data), enabled: isGestor });
+  const { data: lancamentos = [], isLoading } = useQuery({ queryKey: ['lancamentos'], queryFn: () => financeiroService.list(0, 200).then(r => r.data), enabled: isGestor });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: LancamentoStatus }) => financeiroService.update(id, { status }),
@@ -165,13 +152,16 @@ export default function FinanceiroPage() {
   ] : [];
 
   return (
-    <AppLayout title="Financeiro" subtitle="Controle financeiro">
+    <AppLayout title="Financeiro" subtitle="Controle financeiro" allowedRoles={['gestor']}>
       <PageHeader
         title="Financeiro"
         subtitle="Receitas, despesas e indicadores"
         actions={
           <>
-            <GradientButton variant="outline" onClick={() => excelService.export('financeiro')}><Download className="w-4 h-4" /> Exportar</GradientButton>
+            <ExcelActions module="financeiro" onImported={() => {
+              qc.invalidateQueries({ queryKey: ['lancamentos'] });
+              qc.invalidateQueries({ queryKey: ['financeiro-indicadores'] });
+            }} />
             <GradientButton onClick={() => setDialog({ open: true })}><Plus className="w-4 h-4" /> Novo Lançamento</GradientButton>
           </>
         }
