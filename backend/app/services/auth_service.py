@@ -4,11 +4,14 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import criar_token, verificar_senha
+from app.models.usuario import Usuario
 from app.repositories import usuario_repository
 from app.services import auditoria_service
 
 
-def login(db: Session, login: str, password: str, ip: str | None = None) -> str:
+def login(
+    db: Session, login: str, password: str, ip: str | None = None
+) -> tuple[Usuario, str]:
     usuario = usuario_repository.buscar_por_login(db, login)
 
     if not usuario or not verificar_senha(password, usuario.password_hash):
@@ -48,4 +51,4 @@ def login(db: Session, login: str, password: str, ip: str | None = None) -> str:
         detalhes=f"Login realizado: {usuario.login}",
     )
 
-    return token
+    return usuario, token

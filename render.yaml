@@ -16,4 +16,4 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "480"
       - key: FRONTEND_URL
-        value: https://inovatech.onrender.com
+        value: https://inovatech-online.vercel.app

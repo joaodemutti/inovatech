@@ -12,7 +12,7 @@ from app.services import auditoria_service, auth_service
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 
-@router.post("/login")
+@router.post("/login", response_model=UsuarioResponse)
 def login(
     payload: LoginRequest,
     request: Request,
@@ -20,7 +20,7 @@ def login(
     db: Session = Depends(get_db),
 ):
     ip = request.client.host if request.client else None
-    token = auth_service.login(db, payload.login, payload.password, ip)
+    usuario, token = auth_service.login(db, payload.login, payload.password, ip)
 
     response.set_cookie(
         key="access_token",
@@ -30,7 +30,7 @@ def login(
         samesite="none",
         max_age=60 * settings.access_token_expire_minutes,
     )
-    return {"message": "Login realizado com sucesso"}
+    return usuario
 
 
 @router.post("/logout")

@@ -37,15 +37,18 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      await authService.login(data);
-      const me = await authService.me();
-      setUser(me.data);
-      toast.success(`Bem-vindo, ${me.data.nome}!`);
+      const { data: me } = await authService.login(data);
+      setUser(me);
+      toast.success(`Bem-vindo, ${me.nome}!`);
       router.push('/dashboard');
     } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail;
       const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'Credenciais inválidas';
+        status === 401
+          ? detail ?? 'Credenciais inválidas'
+          : detail ?? 'Não foi possível entrar. Tente novamente.';
       setError(msg);
     } finally {
       setLoading(false);
