@@ -17,9 +17,20 @@ import app.models  # noqa: F401 — registra todas as tabelas no metadata
 from seed import seed, seed_usuarios
 
 
+# Chave do lock consultivo (advisory lock) do reset E2E.
+LOCK_KEY = 915273
+
+
 def reset():
     db = SessionLocal()
+    locked = False
     try:
+        # Lock consultivo de sessão: serializa resets concorrentes para não
+        # conflitar com um teste/reset já em andamento (idempotente sob concorrência).
+        # Um segundo reset aguarda o primeiro terminar em vez de corromper os dados.
+        db.execute(text("SELECT pg_advisory_lock(:k)"), {"k": LOCK_KEY})
+        locked = True
+
         tabelas = [t.name for t in Base.metadata.sorted_tables]
         if tabelas:
             db.execute(
@@ -35,6 +46,12 @@ def reset():
         print(f"✗ Erro no reset: {e}")
         raise
     finally:
+        if locked:
+            try:
+                db.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": LOCK_KEY})
+                db.commit()
+            except Exception:
+                pass
         db.close()
 
 

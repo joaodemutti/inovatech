@@ -10,6 +10,12 @@ on:
         required: true
         default: ''
 
+# Apenas UMA execução por vez: um novo disparo aguarda o run atual terminar,
+# evitando que o reset do banco aconteça no meio de um teste já em andamento.
+concurrency:
+  group: e2e-prod
+  cancel-in-progress: false
+
 env:
   PLAYWRIGHT_BASE_URL: https://inovatech-online.vercel.app
   NEXT_PUBLIC_API_URL: https://inovatech-api.onrender.com

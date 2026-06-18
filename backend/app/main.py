@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.core.config import settings
+from app.dependencies.auth import require_role
+from app.models.usuario import Usuario
 from app.routes import (
     admin,
     auth,
@@ -68,6 +70,11 @@ def root():
 
 
 @app.get("/e2e", tags=["E2E"])
-def e2e_redirect():
-    """Atalho para a demonstração: redireciona para o frontend (app de produção)."""
+def e2e_redirect(_: Usuario = Depends(require_role("gestor"))):
+    """Atalho para a demonstração: redireciona para o frontend (app de produção).
+
+    Requer estar autenticado como **gestor**. Abra a URL direto no navegador
+    (barra de endereços) para ser redirecionado — o "Execute" do Swagger apenas
+    segue o redirect e mostra o HTML da página de destino.
+    """
     return RedirectResponse(url=settings.frontend_url)
