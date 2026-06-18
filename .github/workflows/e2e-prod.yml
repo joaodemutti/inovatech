@@ -1,0 +1,78 @@
+name: E2E em Produção (demo)
+
+# Dispara pelo navegador: aba "Actions" → "E2E em Produção (demo)" → "Run workflow".
+# ATENÇÃO: este workflow APAGA e repopula o banco de PRODUÇÃO antes de rodar o teste.
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Digite RESET para confirmar que o banco de PRODUÇÃO será apagado e repopulado'
+        required: true
+        default: ''
+
+env:
+  PLAYWRIGHT_BASE_URL: https://inovatech-online.vercel.app
+  NEXT_PUBLIC_API_URL: https://inovatech-api.onrender.com
+  RESET_DB: 'off' # o reset de produção é feito no passo dedicado abaixo (não pelo global-setup)
+
+jobs:
+  e2e-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmação obrigatória
+        if: ${{ github.event.inputs.confirmar != 'RESET' }}
+        run: |
+          echo "::error::Digite RESET no campo de confirmação para apagar/repopular o banco de produção."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências do backend
+        run: pip install -r backend/requirements.txt
+
+      - name: Resetar banco de PRODUÇÃO (TRUNCATE + seed completo)
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: python reset_db.py
+
+      - name: Acordar a API (Render free tier)
+        run: |
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$NEXT_PUBLIC_API_URL/" || true)
+            echo "API -> $code"
+            [ "$code" = "200" ] && break
+            sleep 5
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências do frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Instalar navegadores Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Rodar demo (E2E) contra produção
+        working-directory: frontend
+        run: npx playwright test demo/video
+
+      - name: Publicar vídeo + relatório (artifacts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-prod-resultado
+          path: |
+            frontend/videos-demo/
+            frontend/playwright-report/
+          retention-days: 14

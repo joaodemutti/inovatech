@@ -1,5 +1,6 @@
-# Credenciais reais do seed.py
-GESTOR_LOGIN=roberto
+# Credenciais reais do seed.py (personas do INOVATECH_PROJECT.md)
+# Gestora: Dona Marta (§2). Use roberto para o gestor "exemplo" do §4, se preferir.
+GESTOR_LOGIN=marta
 GESTOR_PASSWORD=Inovatech@2026
 
 MEDICO_LOGIN=carlos

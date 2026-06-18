@@ -1,4 +1,5 @@
 import { type Page, expect } from '@playwright/test';
+import { campo } from '../utils/helpers';
 
 export class MedicosPage {
   constructor(private page: Page) {}
@@ -19,10 +20,11 @@ export class MedicosPage {
     crm: string;
     especialidade: string;
   }) {
-    await this.page.getByLabel('Nome Completo').fill(data.nome);
-    await this.page.getByLabel('CPF').fill(data.cpf);
-    await this.page.getByLabel('CRM').fill(data.crm);
-    await this.page.getByLabel('Especialidade').fill(data.especialidade);
+    const d = this.page.getByRole('dialog');
+    await campo(d, 'nome_completo').fill(data.nome);
+    await campo(d, 'cpf').fill(data.cpf);
+    await campo(d, 'crm').fill(data.crm);
+    await campo(d, 'especialidade').fill(data.especialidade);
   }
 
   async submitForm() {

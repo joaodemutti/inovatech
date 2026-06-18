@@ -210,6 +210,8 @@ def seed(db: Session):
 
 
 USUARIOS_ESSENCIAIS = [
+    # Persona da gestora descrita no INOVATECH_PROJECT.md (§2 "Dona Marta")
+    {"nome": "Dona Marta",      "perfil": "gestor",         "login": "marta",   "email": "marta@clinica.com"},
     {"nome": "Roberto Admin",   "perfil": "gestor",         "login": "roberto", "email": "roberto@clinica.com"},
     {"nome": "Ana Lima",        "perfil": "recepcionista",  "login": "ana",     "email": "ana@clinica.com"},
     {"nome": "Dr. Carlos Lima", "perfil": "medico",         "login": "carlos",  "email": "carlos@clinica.com"},

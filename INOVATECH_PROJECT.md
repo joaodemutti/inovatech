@@ -382,7 +382,7 @@ id, data_hora, usuario_id (FK), acao, modulo, ip, resultado, detalhes
 | RF08 | Backup | Realizar backup automático diário dos dados com registro no log de auditoria |
 | RF09 | Agenda → Financeiro | Ao registrar consulta como Realizada, criar lançamento financeiro automaticamente |
 | RF10 | Portal Paciente | Disponibilizar download de laudos em PDF somente após liberação explícita do médico |
-| RF11 | Excel — Exportação | Exportar dados de cada entida de (Consultas, Prontuários, Pacientes, Médicos, Lançamentos Financeiros, Registros de Ponto, Usuários, Log de Auditoria) em arquivo `.xlsx` |
+| RF11 | Excel — Exportação | Exportar dados de cada entidade (Consultas, Prontuários, Pacientes, Médicos, Lançamentos Financeiros, Registros de Ponto, Usuários, Log de Auditoria) em arquivo `.xlsx` |
 | RF12 | Excel — Importação | Importar dados via arquivo `.xlsx` para cada entidade, com validação de campos obrigatórios, tipos e unicidade (CPF, CRM) antes de persistir no banco |
 
 ### 7.2 Requisitos Não Funcionais

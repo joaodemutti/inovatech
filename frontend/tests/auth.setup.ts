@@ -1,14 +1,27 @@
 import { test as setup, expect } from '@playwright/test';
-import path from 'path';
+import { PERSONAS, personaLabel, authFile, type Role } from './utils/helpers';
 
-const GESTOR_FILE = path.join(__dirname, '.auth/gestor.json');
+/**
+ * Setup de autenticação: faz login de cada perfil pela UI e persiste o cookie
+ * de sessão em tests/.auth/<perfil>.json. Cada projeto de teste reaproveita o
+ * storageState correspondente, evitando refazer login a cada spec.
+ */
+const perfis: Role[] = ['gestor', 'recepcionista', 'medico', 'paciente'];
 
-setup('autenticar como gestor', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByPlaceholder('Login').fill(process.env.GESTOR_LOGIN ?? 'admin');
-  await page.getByPlaceholder('Senha').fill(process.env.GESTOR_PASSWORD ?? 'admin123');
-  await page.getByRole('button', { name: 'Entrar' }).click();
+for (const role of perfis) {
+  setup(`autenticar como ${personaLabel(role)}`, async ({ page }) => {
+    const { login, password } = PERSONAS[role];
 
-  await expect(page).toHaveURL(/dashboard/, { timeout: 10_000 });
-  await page.context().storageState({ path: GESTOR_FILE });
-});
+    await page.goto('/login');
+    await page.getByPlaceholder('Login').fill(login);
+    await page.getByPlaceholder('Senha').fill(password);
+    await page.getByRole('button', { name: 'Entrar' }).click();
+
+    // O login sempre redireciona para /dashboard. O paciente é bloqueado lá
+    // (vê "Acesso Restrito"), mas a sessão/cookie já está válida.
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/dashboard/);
+
+    await page.context().storageState({ path: authFile(role) });
+  });
+}

@@ -1,4 +1,5 @@
 import { type Page, expect } from '@playwright/test';
+import { campo } from '../utils/helpers';
 
 export class ConsultasPage {
   constructor(private page: Page) {}
@@ -25,16 +26,13 @@ export class ConsultasPage {
     tipo: string;
     valor: string;
   }) {
-    const pacienteSelect = this.page.getByRole('dialog').locator('select').first();
-    await pacienteSelect.selectOption({ index: data.pacienteIndex ?? 1 });
-
-    const medicoSelect = this.page.getByRole('dialog').locator('select').nth(1);
-    await medicoSelect.selectOption({ index: data.medicoIndex ?? 1 });
-
-    await this.page.getByRole('dialog').getByLabel('Data').fill(data.data);
-    await this.page.getByRole('dialog').getByLabel('Horário').fill(data.horario);
-    await this.page.getByRole('dialog').getByLabel('Tipo').fill(data.tipo);
-    await this.page.getByRole('dialog').getByLabel(/Valor/).fill(data.valor);
+    const d = this.page.getByRole('dialog');
+    await campo(d, 'paciente_id').selectOption({ index: data.pacienteIndex ?? 1 });
+    await campo(d, 'medico_id').selectOption({ index: data.medicoIndex ?? 1 });
+    await campo(d, 'data').fill(data.data);
+    await campo(d, 'horario').fill(data.horario);
+    await campo(d, 'tipo_consulta').fill(data.tipo);
+    await campo(d, 'valor').fill(data.valor);
   }
 
   async submitForm() {

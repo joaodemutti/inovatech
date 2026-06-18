@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from app.core.config import settings
 from app.routes import (
@@ -64,3 +65,9 @@ app.include_router(dashboard.router)
 @app.get("/", tags=["Health"])
 def root():
     return {"status": "ok", "app": "INOVATECH API", "version": "1.0.0"}
+
+
+@app.get("/e2e", tags=["E2E"])
+def e2e_redirect():
+    """Atalho para a demonstração: redireciona para o frontend (app de produção)."""
+    return RedirectResponse(url=settings.frontend_url)
